@@ -1,0 +1,104 @@
+<div class="leaderboard-container animate-fade-in">
+  <h2>Global Rankings</h2>
+
+  @if (loading()) {
+    <div class="spinner-container">
+      <mat-spinner diameter="50"></mat-spinner>
+    </div>
+  } @else {
+    <!-- Top 3 Podium View -->
+    @if (podium().length > 0) {
+      <div class="podium-row">
+        <!-- Rank 2 -->
+        @if (podium()[1]; as second) {
+          <div class="podium-card silver">
+            <div class="badge-wrapper">
+              <mat-icon class="podium-badge text-silver">emoji_events</mat-icon>
+              <span class="rank-num">2</span>
+            </div>
+            <h4>{{ second.username }}</h4>
+            <strong class="worth">{{ second.netWorth | currency:'USD':'symbol':'1.0-0' }}</strong>
+            <span class="sub-worth">Holdings: {{ second.holdingsValue | currency:'USD':'symbol':'1.0-0' }}</span>
+          </div>
+        }
+
+        <!-- Rank 1 -->
+        @if (podium()[0]; as first) {
+          <div class="podium-card gold">
+            <div class="crown-wrapper">
+              <mat-icon class="crown-icon">workspace_premium</mat-icon>
+            </div>
+            <div class="badge-wrapper">
+              <mat-icon class="podium-badge text-gold">emoji_events</mat-icon>
+              <span class="rank-num">1</span>
+            </div>
+            <h4>{{ first.username }}</h4>
+            <strong class="worth-gold">{{ first.netWorth | currency:'USD':'symbol':'1.0-0' }}</strong>
+            <span class="sub-worth">Holdings: {{ first.holdingsValue | currency:'USD':'symbol':'1.0-0' }}</span>
+          </div>
+        }
+
+        <!-- Rank 3 -->
+        @if (podium()[2]; as third) {
+          <div class="podium-card bronze">
+            <div class="badge-wrapper">
+              <mat-icon class="podium-badge text-bronze">emoji_events</mat-icon>
+              <span class="rank-num">3</span>
+            </div>
+            <h4>{{ third.username }}</h4>
+            <strong class="worth">{{ third.netWorth | currency:'USD':'symbol':'1.0-0' }}</strong>
+            <span class="sub-worth">Holdings: {{ third.holdingsValue | currency:'USD':'symbol':'1.0-0' }}</span>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Leaderboard Table -->
+    <mat-card class="table-card glass-card">
+      <mat-card-header>
+        <mat-card-title>Leaderboard Rankings</mat-card-title>
+        <mat-card-subtitle>Rankings are sorted by total player net worth (cash + holdings valuation)</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content class="table-content">
+        @if (entries().length === 0) {
+          <div class="empty-state">
+            <mat-icon class="empty-icon">military_tech</mat-icon>
+            <p>No players found in rankings database. Be the first to register and trade!</p>
+          </div>
+        } @else {
+          <div class="table-container">
+            <table class="leaderboard-table">
+              <thead>
+                <tr>
+                  <th class="text-center">Rank</th>
+                  <th>Trader Name</th>
+                  <th class="text-right">Cash Balance</th>
+                  <th class="text-right">Holdings Value</th>
+                  <th class="text-right">Total Net Worth</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (entry of entries(); track entry._id; let idx = $index) {
+                  <tr [class.user-row]="isCurrentUser(entry.username)">
+                    <td class="text-center font-bold">
+                      <span class="rank-badge" [ngClass]="getRankClass(idx + 1)">
+                        {{ idx + 1 }}
+                      </span>
+                    </td>
+                    <td class="td-username font-medium">
+                      {{ entry.username }}
+                      <span class="current-user-tag" *ngIf="isCurrentUser(entry.username)">(You)</span>
+                    </td>
+                    <td class="text-right">{{ entry.cash | currency:'USD':'symbol':'1.2-2' }}</td>
+                    <td class="text-right">{{ entry.holdingsValue | currency:'USD':'symbol':'1.2-2' }}</td>
+                    <td class="text-right font-bold worth-col">{{ entry.netWorth | currency:'USD':'symbol':'1.2-2' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

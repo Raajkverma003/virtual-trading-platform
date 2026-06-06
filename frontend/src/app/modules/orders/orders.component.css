@@ -1,0 +1,262 @@
+.orders-container {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #edf2f7;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+.header-row h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.tab-btn {
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  border-radius: 6px;
+  padding: 8px 16px;
+}
+
+.tab-btn.active {
+  color: #ff5722 !important;
+  background-color: #fff3f0;
+}
+
+.tab-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 56px;
+  width: 56px;
+  height: 56px;
+  color: #cbd5e1;
+  margin-bottom: 16px;
+}
+
+.empty-state h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: #475569;
+  margin: 0 0 6px 0;
+}
+
+.empty-state p {
+  font-size: 14px;
+  color: #94a3b8;
+  max-width: 340px;
+  line-height: 1.5;
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px;
+}
+
+.order-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.order-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  border-color: #cbd5e1;
+}
+
+.pending-border {
+  border-left: 4px solid #387ed1;
+}
+
+.history-card {
+  border-left: 4px solid #64748b;
+}
+
+.order-main-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 24px;
+}
+
+.width-full {
+  width: 100%;
+}
+
+.badge-col {
+  width: 70px;
+}
+
+.type-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.type-badge.buy {
+  background-color: #ecfdf5;
+  color: #10b981;
+}
+
+.type-badge.sell {
+  background-color: #fef2f2;
+  color: #ef4444;
+}
+
+.detail-col {
+  flex: 1.2;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.flex-2 {
+  flex: 1.6;
+}
+
+.detail-col h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.order-lbl {
+  font-size: 11px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.val-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.date-text {
+  font-size: 13px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 12px;
+  text-transform: capitalize;
+}
+
+.status-pill.completed, .status-pill.filled {
+  background-color: #e6fcf5;
+  color: #0ca678;
+}
+
+.status-pill.pending {
+  background-color: #eef3fc;
+  color: #3b5bdb;
+}
+
+.status-pill.cancelled {
+  background-color: #f1f3f5;
+  color: #868e96;
+}
+
+.status-pill.failed, .status-pill.rejected {
+  background-color: #fff5f5;
+  color: #fa5252;
+}
+
+.action-col {
+  padding-left: 20px;
+}
+
+.cancel-btn {
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .order-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .order-main-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+  }
+  .detail-col {
+    text-align: left !important;
+    width: 100%;
+  }
+  .action-col {
+    padding-left: 0;
+    width: 100%;
+  }
+  .cancel-btn {
+    width: 100%;
+  }
+}

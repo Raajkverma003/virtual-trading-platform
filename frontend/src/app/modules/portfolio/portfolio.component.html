@@ -1,0 +1,129 @@
+<div class="portfolio-container animate-fade-in">
+  <h2>Portfolio Cockpit</h2>
+
+  @if (loadingPortfolio()) {
+    <div class="spinner-container">
+      <mat-spinner diameter="50"></mat-spinner>
+    </div>
+  } @else {
+    <!-- KPI summary row -->
+    @if (summary(); as data) {
+      <div class="kpi-row">
+        <mat-card class="kpi-card glass-card">
+          <div class="kpi-content">
+            <div class="kpi-icon-wrapper bg-blue-tint">
+              <mat-icon class="kpi-icon text-blue">account_balance_wallet</mat-icon>
+            </div>
+            <div class="kpi-details">
+              <span class="kpi-lbl">Cash Balance</span>
+              <h3>{{ data.cash | currency:'USD':'symbol':'1.2-2' }}</h3>
+            </div>
+          </div>
+        </mat-card>
+
+        <mat-card class="kpi-card glass-card">
+          <div class="kpi-content">
+            <div class="kpi-icon-wrapper bg-purple-tint">
+              <mat-icon class="kpi-icon text-purple">pie_chart</mat-icon>
+            </div>
+            <div class="kpi-details">
+              <span class="kpi-lbl">Holdings Valuation</span>
+              <h3>{{ data.totalHoldingsValue | currency:'USD':'symbol':'1.2-2' }}</h3>
+            </div>
+          </div>
+        </mat-card>
+
+        <mat-card class="kpi-card glass-card">
+          <div class="kpi-content">
+            <div class="kpi-icon-wrapper bg-indigo-tint">
+              <mat-icon class="kpi-icon text-indigo">trending_up</mat-icon>
+            </div>
+            <div class="kpi-details">
+              <span class="kpi-lbl">Total Net Worth</span>
+              <h3>{{ data.netWorth | currency:'USD':'symbol':'1.2-2' }}</h3>
+            </div>
+          </div>
+        </mat-card>
+
+        <mat-card class="kpi-card glass-card">
+          <div class="kpi-content">
+            <div class="kpi-icon-wrapper" [ngClass]="data.totalPnl >= 0 ? 'bg-green-tint' : 'bg-red-tint'">
+              <mat-icon class="kpi-icon" [ngClass]="data.totalPnl >= 0 ? 'text-green' : 'text-red'">
+                {{ data.totalPnl >= 0 ? 'show_chart' : 'falling_chart' }}
+              </mat-icon>
+            </div>
+            <div class="kpi-details">
+              <span class="kpi-lbl">All-time P&L</span>
+              <h3 [ngClass]="data.totalPnl >= 0 ? 'green-text' : 'red-text'">
+                {{ data.totalPnl >= 0 ? '+' : '' }}{{ data.totalPnl | currency:'USD':'symbol':'1.2-2' }}
+                <span class="pnl-percent">({{ data.totalPnlPercent | number:'1.2-2' }}%)</span>
+              </h3>
+            </div>
+          </div>
+        </mat-card>
+      </div>
+    }
+
+    <!-- Charts and visual indicators -->
+    <div class="visual-row">
+      <mat-card class="chart-card glass-card">
+        <mat-card-header>
+          <mat-card-title>Performance History</mat-card-title>
+          <mat-card-subtitle>Net worth progress chart</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content class="chart-wrapper">
+          <canvas #chartCanvas></canvas>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Holdings breakdown table -->
+    @if (summary(); as data) {
+      <div class="holdings-section">
+        <div class="section-title">
+          <h3>Active Asset Allocations</h3>
+        </div>
+
+        @if (data.holdings.length === 0) {
+          <div class="empty-holdings">
+            <mat-icon class="empty-icon">layers_clear</mat-icon>
+            <h4>No Active Holdings</h4>
+            <p>You do not own any stock equities. Place market or limit orders in the dashboard to acquire stock assets.</p>
+          </div>
+        } @else {
+          <div class="table-container">
+            <table class="holdings-table">
+              <thead>
+                <tr>
+                  <th>Asset</th>
+                  <th class="text-right">Shares Owned</th>
+                  <th class="text-right">Average Buy Price</th>
+                  <th class="text-right">Market Price</th>
+                  <th class="text-right">Total Valuation</th>
+                  <th class="text-right">Profit / Loss</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of data.holdings; track item.symbol) {
+                  <tr>
+                    <td class="td-symbol">
+                      <strong>{{ item.symbol }}</strong>
+                    </td>
+                    <td class="text-right font-medium">{{ item.shares }}</td>
+                    <td class="text-right">{{ item.avgBuyPrice | currency:'USD':'symbol':'1.2-2' }}</td>
+                    <td class="text-right font-medium">{{ item.currentPrice | currency:'USD':'symbol':'1.2-2' }}</td>
+                    <td class="text-right font-bold text-slate">{{ item.currentValue | currency:'USD':'symbol':'1.2-2' }}</td>
+                    <td class="text-right font-bold" [ngClass]="item.pnl >= 0 ? 'green-text' : 'red-text'">
+                      {{ item.pnl >= 0 ? '+' : '' }}{{ item.pnl | currency:'USD':'symbol':'1.2-2' }}
+                      <span class="sub-percent">({{ item.pnlPercent | number:'1.2-2' }}%)</span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

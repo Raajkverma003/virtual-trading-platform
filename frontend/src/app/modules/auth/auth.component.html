@@ -1,0 +1,102 @@
+<div class="split-layout">
+  <!-- Left side: Visual Branding Panel -->
+  <div class="brand-panel">
+    <div class="brand-overlay"></div>
+    <div class="brand-content">
+      <div class="logo-wrapper">
+        <mat-icon class="brand-logo-icon">trending_up</mat-icon>
+        <span class="logo-text">V-Kite</span>
+      </div>
+      <h1>Experience Smart Virtual Stock Trading</h1>
+      <p>Practice trading live US equities with a simulated $100,000 portfolio. Monitor real-time prices, place limit orders, and climb the global leaderboard risk-free.</p>
+      
+      <div class="mock-stats card glass-card">
+        <div class="stat-item">
+          <span class="stat-value">$100K</span>
+          <span class="stat-label">Initial Balance</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-value">5s</span>
+          <span class="stat-label">Price Update</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-value">100%</span>
+          <span class="stat-label">Risk Free</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right side: Authentication forms -->
+  <div class="form-panel">
+    <mat-card class="auth-card glass-card">
+      <mat-card-header>
+        <mat-card-title>{{ isLoginMode() ? 'Welcome Back' : 'Create Account' }}</mat-card-title>
+        <mat-card-subtitle>
+          {{ isLoginMode() ? 'Log in to manage your portfolio' : 'Register to start trading virtual cash' }}
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content class="form-content">
+        <form [formGroup]="authForm" (ngSubmit)="onSubmit()">
+          <!-- Username (Register only) -->
+          @if (!isLoginMode()) {
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Username</mat-label>
+              <input matInput formControlName="username" placeholder="e.g. janesmith" autocomplete="username" />
+              <mat-icon matPrefix>person</mat-icon>
+              @if (authForm.get('username')?.hasError('required')) {
+                <mat-error>Username is required</mat-error>
+              }
+            </mat-form-field>
+          }
+
+          <!-- Email -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Email Address</mat-label>
+            <input matInput type="email" formControlName="email" placeholder="e.g. jane@example.com" autocomplete="email" />
+            <mat-icon matPrefix>email</mat-icon>
+            @if (authForm.get('email')?.hasError('required')) {
+              <mat-error>Email is required</mat-error>
+            }
+            @if (authForm.get('email')?.hasError('email')) {
+              <mat-error>Please enter a valid email address</mat-error>
+            }
+          </mat-form-field>
+
+          <!-- Password -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Password</mat-label>
+            <input matInput [type]="hidePassword() ? 'password' : 'text'" formControlName="password" autocomplete="current-password" />
+            <mat-icon matPrefix>lock</mat-icon>
+            <button mat-icon-button matSuffix (click)="hidePassword.set(!hidePassword())" type="button" aria-label="Toggle password visibility">
+              <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+            @if (authForm.get('password')?.hasError('required')) {
+              <mat-error>Password is required</mat-error>
+            }
+            @if (authForm.get('password')?.hasError('minlength')) {
+              <mat-error>Password must be at least 6 characters</mat-error>
+            }
+          </mat-form-field>
+
+          <button mat-raised-button color="primary" class="submit-btn" type="submit" [disabled]="loading() || authForm.invalid">
+            @if (loading()) {
+              <span>Connecting...</span>
+            } @else {
+              <span>{{ isLoginMode() ? 'Sign In' : 'Sign Up' }}</span>
+            }
+          </button>
+        </form>
+      </mat-card-content>
+
+      <mat-card-actions class="toggle-mode">
+        <button mat-button (click)="toggleMode()">
+          {{ isLoginMode() ? "Don't have an account? Sign Up" : 'Already have an account? Sign In' }}
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+</div>

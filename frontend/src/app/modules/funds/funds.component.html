@@ -1,0 +1,163 @@
+<div class="funds-container animate-fade-in">
+  <h2>Funds Management</h2>
+
+  <div class="funds-grid">
+    <!-- Left Column: Balances and Linked Banks -->
+    <div class="left-col">
+      <!-- Card for Cash Balance -->
+      <mat-card class="balance-card glass-card theme-gradient">
+        <div class="card-wave-bg"></div>
+        <mat-card-header>
+          <mat-icon class="wallet-icon">account_balance_wallet</mat-icon>
+          <mat-card-title>Available Trading Margin</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="balance-body">
+          <h1 class="balance-title">{{ authService.currentUser()?.balance | currency:'USD':'symbol':'1.2-2' }}</h1>
+          <span class="sub-lbl">Available Cash to BUY Stock Assets</span>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Linked Bank Account Info -->
+      <mat-card class="bank-card glass-card">
+        <mat-card-header>
+          <mat-card-title>Linked Funding Accounts</mat-card-title>
+          <mat-card-subtitle>Primary account for instant deposits</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content class="bank-content">
+          <div class="bank-item">
+            <div class="bank-logo-wrapper">
+              <mat-icon class="bank-icon">account_balance</mat-icon>
+            </div>
+            <div class="bank-details">
+              <h4>Chase Savings Account</h4>
+              <span>Account ending in •••• 9876</span>
+            </div>
+            <div class="bank-status">
+              <span class="status-pill active-status">Primary</span>
+            </div>
+          </div>
+
+          <div class="bank-item disabled-bank">
+            <div class="bank-logo-wrapper">
+              <mat-icon class="bank-icon">credit_card</mat-icon>
+            </div>
+            <div class="bank-details">
+              <h4>Visa Debit Card</h4>
+              <span>Card ending in •••• 4321</span>
+            </div>
+            <div class="bank-status">
+              <span class="status-pill active-status">Linked</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Right Column: Deposit & Withdrawal Actions -->
+    <div class="right-col">
+      <mat-card class="transfer-card glass-card">
+        <mat-card-header>
+          <mat-card-title>Simulate Bank Transfer</mat-card-title>
+          <mat-card-subtitle>Deposit or withdraw cash (simulated)</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content class="transfer-body">
+          <div class="action-toggle">
+            <button 
+              type="button" 
+              mat-button 
+              class="action-btn dep-btn" 
+              [class.active]="actionType() === 'DEPOSIT'"
+              (click)="setActionType('DEPOSIT')"
+            >DEPOSIT FUNDS</button>
+            <button 
+              type="button" 
+              mat-button 
+              class="action-btn wth-btn" 
+              [class.active]="actionType() === 'WITHDRAWAL'"
+              (click)="setActionType('WITHDRAWAL')"
+            >WITHDRAW FUNDS</button>
+          </div>
+
+          <!-- Loading Indicator -->
+          @if (processing()) {
+            <div class="loading-state">
+              <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
+              <p>Processing electronic funds transfer...</p>
+            </div>
+          } @else {
+            <form [formGroup]="fundsForm" (ngSubmit)="handleTransfer()" class="funds-form">
+              <mat-form-field appearance="outline">
+                <mat-label>Select Linked Bank</mat-label>
+                <mat-select formControlName="bank">
+                  <mat-option value="Chase Savings Account">Chase Savings Account (•••• 9876)</mat-option>
+                  <mat-option value="Visa Debit Card">Visa Debit Card (•••• 4321)</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Amount ($)</mat-label>
+                <input matInput type="number" formControlName="amount" min="1" step="10" />
+                <mat-icon matPrefix>attach_money</mat-icon>
+                <mat-error *ngIf="fundsForm.get('amount')?.hasError('required')">Amount is required</mat-error>
+                <mat-error *ngIf="fundsForm.get('amount')?.hasError('min')">Minimum transfer is $1.00</mat-error>
+                <mat-error *ngIf="actionType() === 'WITHDRAWAL' && fundsForm.get('amount')?.hasError('max')">
+                  Cannot withdraw more than available cash ({{ authService.currentUser()?.balance | currency:'USD' }})
+                </mat-error>
+              </mat-form-field>
+
+              <button 
+                mat-raised-button 
+                color="primary"
+                class="execute-btn" 
+                type="submit" 
+                [disabled]="fundsForm.invalid"
+              >
+                Initiate Instant {{ actionType() }}
+              </button>
+            </form>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Bottom Row: Transfer History -->
+  <div class="history-row">
+    <mat-card class="log-card glass-card">
+      <mat-card-header>
+        <mat-card-title>Recent Cash Transfers</mat-card-title>
+        <mat-card-subtitle>Chronological logs of bank deposits and withdrawals</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content class="log-content">
+        @if (logs().length === 0) {
+          <div class="empty-logs">
+            <mat-icon class="empty-icon">list_alt</mat-icon>
+            <p>No recent bank transfers. Balance starts with default $100,000.00 cash margin.</p>
+          </div>
+        } @else {
+          <div class="log-list">
+            @for (log of logs(); track log.id) {
+              <div class="log-item">
+                <div class="log-main">
+                  <mat-icon class="log-type-icon" [ngClass]="log.type === 'DEPOSIT' ? 'text-green' : 'text-purple'">
+                    {{ log.type === 'DEPOSIT' ? 'arrow_downward' : 'arrow_upward' }}
+                  </mat-icon>
+                  <div class="log-desc">
+                    <h4>{{ log.type }}</h4>
+                    <span>{{ log.bankName }} ({{ log.accountEnding }})</span>
+                  </div>
+                </div>
+                <div class="log-meta">
+                  <strong [ngClass]="log.type === 'DEPOSIT' ? 'green-text' : 'purple-text'">
+                    {{ log.type === 'DEPOSIT' ? '+' : '-' }}{{ log.amount | currency:'USD':'symbol':'1.2-2' }}
+                  </strong>
+                  <span class="log-time">{{ log.timestamp | date:'short' }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

@@ -1,0 +1,158 @@
+<div class="dashboard-grid animate-fade-in">
+  <!-- Left side: Market Watchlist -->
+  <div class="watchlist-section">
+    <div class="section-header">
+      <h2>Market Watchlist</h2>
+      <span class="live-indicator">
+        <span class="pulse-dot"></span> Real-time
+      </span>
+    </div>
+
+    @if (loadingStocks()) {
+      <div class="spinner-container">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+    } @else {
+      <div class="ticker-list">
+        @for (stock of stocks(); track stock.symbol) {
+          <div 
+            class="ticker-card"
+            [class.selected]="selectedStock()?.symbol === stock.symbol"
+            [class.flash-up]="stock.flashState === 'up'"
+            [class.flash-down]="stock.flashState === 'down'"
+            (click)="selectStock(stock)"
+          >
+            <div class="ticker-info">
+              <span class="symbol">{{ stock.symbol }}</span>
+              <span class="company-name">{{ stock.name }}</span>
+            </div>
+            <div class="price-info">
+              <span class="price">{{ stock.price | currency:'USD':'symbol':'1.2-2' }}</span>
+              <span class="change" [ngClass]="stock.change >= 0 ? 'green-text' : 'red-text'">
+                <mat-icon class="mini-arrow">{{ stock.change >= 0 ? 'arrow_drop_up' : 'arrow_drop_down' }}</mat-icon>
+                {{ stock.changePercent | number:'1.2-2' }}%
+              </span>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Right side: Trading Desk -->
+  <div class="trading-desk-section">
+    @if (selectedStock(); as stock) {
+      <mat-card class="trading-card glass-card">
+        <mat-card-header>
+          <div class="title-row">
+            <div class="stock-title-info">
+              <mat-card-title>{{ stock.symbol }}</mat-card-title>
+              <mat-card-subtitle>{{ stock.name }}</mat-card-subtitle>
+            </div>
+            <div class="stock-current-price">
+              <h3>{{ stock.price | currency:'USD':'symbol':'1.2-2' }}</h3>
+              <span [ngClass]="stock.change >= 0 ? 'green-text' : 'red-text'" class="price-change-row">
+                {{ stock.change >= 0 ? '+' : '' }}{{ stock.change | currency:'USD':'symbol':'1.2-2' }} ({{ stock.changePercent | number:'1.2-2' }}%)
+              </span>
+            </div>
+          </div>
+        </mat-card-header>
+
+        <mat-card-content class="desk-content">
+          <!-- Fast Stats -->
+          <div class="stats-row">
+            <div class="stat-box">
+              <span class="stat-lbl">Previous Close</span>
+              <span class="stat-val">{{ stock.prevClose | currency:'USD':'symbol':'1.2-2' }}</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-lbl">Day High (Sim)</span>
+              <span class="stat-val">{{ (stock.price * 1.02) | currency:'USD':'symbol':'1.2-2' }}</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-lbl">Day Low (Sim)</span>
+              <span class="stat-val">{{ (stock.price * 0.98) | currency:'USD':'symbol':'1.2-2' }}</span>
+            </div>
+          </div>
+
+          <!-- Order Box -->
+          <form [formGroup]="tradeForm" (ngSubmit)="submitOrder()" class="trade-form">
+            <div class="action-toggle">
+              <button 
+                type="button" 
+                mat-button 
+                class="action-btn buy-btn" 
+                [class.active]="tradeType() === 'BUY'"
+                (click)="setTradeType('BUY')"
+              >BUY</button>
+              <button 
+                type="button" 
+                mat-button 
+                class="action-btn sell-btn" 
+                [class.active]="tradeType() === 'SELL'"
+                (click)="setTradeType('SELL')"
+              >SELL</button>
+            </div>
+
+            <div class="form-inputs">
+              <mat-form-field appearance="outline">
+                <mat-label>Order Type</mat-label>
+                <mat-select formControlName="orderType">
+                  <mat-option value="MARKET">Market Order</mat-option>
+                  <mat-option value="LIMIT">Limit Order</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Shares</mat-label>
+                <input matInput type="number" formControlName="shares" min="1" step="1" />
+                <mat-error *ngIf="tradeForm.get('shares')?.hasError('required')">Shares quantity is required</mat-error>
+                <mat-error *ngIf="tradeForm.get('shares')?.hasError('min')">Must buy/sell at least 1 share</mat-error>
+              </mat-form-field>
+
+              @if (tradeForm.get('orderType')?.value === 'LIMIT') {
+                <mat-form-field appearance="outline">
+                  <mat-label>Limit Price ($)</mat-label>
+                  <input matInput type="number" formControlName="limitPrice" min="0.01" step="0.01" />
+                  <mat-error *ngIf="tradeForm.get('limitPrice')?.hasError('required')">Limit price is required</mat-error>
+                </mat-form-field>
+              }
+            </div>
+
+            <!-- Live estimate -->
+            <div class="estimate-box">
+              <div class="estimate-row">
+                <span>Current Cash Balance</span>
+                <strong>{{ authService.currentUser()?.balance | currency:'USD':'symbol':'1.2-2' }}</strong>
+              </div>
+              <div class="estimate-row font-large">
+                <span>Estimated Total Cost</span>
+                <strong [class.red-text]="isOverdrawn()">{{ estimatedCost() | currency:'USD':'symbol':'1.2-2' }}</strong>
+              </div>
+            </div>
+
+            <button 
+              mat-raised-button 
+              class="place-order-btn" 
+              [ngClass]="tradeType() === 'BUY' ? 'bg-green' : 'bg-red'"
+              type="submit" 
+              [disabled]="loadingTrade() || tradeForm.invalid || isOverdrawn()"
+            >
+              @if (loadingTrade()) {
+                <span>Executing Trade...</span>
+              } @else {
+                <span>Place {{ tradeType() }} {{ tradeForm.get('orderType')?.value }} Order</span>
+              }
+            </button>
+          </form>
+        </mat-card-content>
+      </mat-card>
+    } @else {
+      <div class="placeholder-card glass-card">
+        <mat-icon class="desk-placeholder-icon">query_stats</mat-icon>
+        <h3>No Stock Selected</h3>
+        <p>Select a stock ticker from the watchlist on the left to review metrics and place buy or sell orders.</p>
+      </div>
+    }
+  </div>
+</div>

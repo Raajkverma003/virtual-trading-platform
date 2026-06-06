@@ -1,0 +1,133 @@
+<div class="orders-container animate-fade-in">
+  <div class="header-row">
+    <h2>Order Board</h2>
+    <div class="tabs">
+      <button 
+        mat-button 
+        class="tab-btn" 
+        [class.active]="activeTab() === 'pending'"
+        (click)="setActiveTab('pending')"
+      >
+        Pending Orders ({{ pendingOrders().length }})
+      </button>
+      <button 
+        mat-button 
+        class="tab-btn" 
+        [class.active]="activeTab() === 'history'"
+        (click)="setActiveTab('history')"
+      >
+        Transaction Log
+      </button>
+    </div>
+  </div>
+
+  <!-- Pending Orders view -->
+  @if (activeTab() === 'pending') {
+    <div class="tab-content">
+      @if (loadingPending()) {
+        <div class="spinner-container">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      } @else if (pendingOrders().length === 0) {
+        <div class="empty-state">
+          <mat-icon class="empty-icon">hourglass_empty</mat-icon>
+          <h3>No Pending Orders</h3>
+          <p>You have no active pending limit orders. Create limit orders in the dashboard to see them here.</p>
+        </div>
+      } @else {
+        <div class="orders-list">
+          @for (order of pendingOrders(); track order._id) {
+            <div class="order-card pending-border">
+              <div class="order-main-info">
+                <div class="badge-col">
+                  <span class="type-badge" [ngClass]="order.type === 'BUY' ? 'buy' : 'sell'">
+                    {{ order.type }}
+                  </span>
+                </div>
+                <div class="detail-col">
+                  <h3>{{ order.symbol }}</h3>
+                  <span class="order-lbl">Limit Order</span>
+                </div>
+                <div class="detail-col text-center">
+                  <span class="val-text">{{ order.shares }}</span>
+                  <span class="order-lbl">Shares</span>
+                </div>
+                <div class="detail-col text-center">
+                  <span class="val-text">{{ order.limitPrice | currency:'USD':'symbol':'1.2-2' }}</span>
+                  <span class="order-lbl">Target Price</span>
+                </div>
+                <div class="detail-col text-right">
+                  <span class="date-text">{{ order.createdAt | date:'short' }}</span>
+                  <span class="order-lbl">Submitted</span>
+                </div>
+              </div>
+              <div class="action-col">
+                <button 
+                  mat-stroked-button 
+                  color="warn" 
+                  class="cancel-btn" 
+                  [disabled]="cancellingId() === order._id"
+                  (click)="cancelLimitOrder(order._id)"
+                >
+                  {{ cancellingId() === order._id ? 'Cancelling...' : 'Cancel Order' }}
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Trade History view -->
+  @if (activeTab() === 'history') {
+    <div class="tab-content">
+      @if (loadingHistory()) {
+        <div class="spinner-container">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      } @else if (historyOrders().length === 0) {
+        <div class="empty-state">
+          <mat-icon class="empty-icon">history</mat-icon>
+          <h3>No Transactions Logged</h3>
+          <p>You haven't completed any trades yet. Complete trades in the dashboard to populate your history log.</p>
+        </div>
+      } @else {
+        <div class="orders-list">
+          @for (order of historyOrders(); track order._id) {
+            <div class="order-card history-card">
+              <div class="order-main-info width-full">
+                <div class="badge-col">
+                  <span class="type-badge" [ngClass]="order.type === 'BUY' ? 'buy' : 'sell'">
+                    {{ order.type }}
+                  </span>
+                </div>
+                <div class="detail-col flex-2">
+                  <h3>{{ order.symbol }}</h3>
+                  <span class="order-lbl">{{ order.orderType }} order</span>
+                </div>
+                <div class="detail-col text-center">
+                  <span class="val-text">{{ order.shares }}</span>
+                  <span class="order-lbl">Shares</span>
+                </div>
+                <div class="detail-col text-center">
+                  <span class="val-text">{{ order.price | currency:'USD':'symbol':'1.2-2' }}</span>
+                  <span class="order-lbl">Execution Price</span>
+                </div>
+                <div class="detail-col text-center">
+                  <span class="status-pill" [ngClass]="order.status.toLowerCase()">
+                    {{ order.status }}
+                  </span>
+                </div>
+                <div class="detail-col text-right">
+                  <span class="date-text">{{ (order.timestamp || order.createdAt) | date:'medium' }}</span>
+                  <span class="order-lbl">Execution Time</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
