@@ -1,0 +1,141 @@
+<div class="holdings-container animate-fade-in">
+  <div class="holdings-header">
+    <h1>Asset Holdings</h1>
+    <p class="subtitle">Track your active equities portfolio in Indian Rupees (₹)</p>
+  </div>
+
+  @if (loading()) {
+    <div class="spinner-container">
+      <mat-spinner diameter="50"></mat-spinner>
+    </div>
+  } @else {
+    <!-- KPI Summary Row -->
+    <div class="kpi-row">
+      <mat-card class="kpi-card glass-card" id="current-value-kpi">
+        <div class="kpi-content">
+          <div class="kpi-icon-wrapper bg-blue-tint">
+            <mat-icon class="kpi-icon text-blue">account_balance_wallet</mat-icon>
+          </div>
+          <div class="kpi-details">
+            <span class="kpi-lbl">Current Value</span>
+            <h3>₹{{ overallCurrentValue() | number:'1.2-2' }}</h3>
+          </div>
+        </div>
+      </mat-card>
+
+      <mat-card class="kpi-card glass-card" id="profit-loss-kpi">
+        <div class="kpi-content">
+          <div class="kpi-icon-wrapper" [ngClass]="overallProfitLoss() >= 0 ? 'bg-green-tint' : 'bg-red-tint'">
+            <mat-icon class="kpi-icon" [ngClass]="overallProfitLoss() >= 0 ? 'text-green' : 'text-red'">
+              {{ overallProfitLoss() >= 0 ? 'trending_up' : 'trending_down' }}
+            </mat-icon>
+          </div>
+          <div class="kpi-details">
+            <span class="kpi-lbl">Overall Profit / Loss</span>
+            <h3 [ngClass]="overallProfitLoss() >= 0 ? 'green-text' : 'red-text'">
+              {{ overallProfitLoss() >= 0 ? '+' : '' }}₹{{ overallProfitLoss() | number:'1.2-2' }}
+              <span class="pnl-percent">({{ overallReturnPercent() | number:'1.2-2' }}%)</span>
+            </h3>
+          </div>
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- Search & Table Layout -->
+    <div class="holdings-section glass-card">
+      <div class="table-actions-row">
+        <h3 class="section-title">Active Hold List</h3>
+        
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Filter by name or symbol...</mat-label>
+          <input matInput 
+                 id="holdingSearchInput"
+                 [ngModel]="searchTerm()"
+                 (ngModelChange)="searchTerm.set($event)"
+                 placeholder="Search e.g. Apple" 
+                 type="text">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+      </div>
+
+      @if (filteredHoldings().length === 0) {
+        <div class="empty-holdings">
+          <mat-icon class="empty-icon">layers_clear</mat-icon>
+          <h4>No Matching Holdings Found</h4>
+          <p>We couldn't find any holdings matching your search term. Clear the search query or make sure you own this stock.</p>
+        </div>
+      } @else {
+        <div class="table-container">
+          <table class="holdings-table" id="holdingsDataTable">
+            <thead>
+              <tr>
+                <th>Stock Name</th>
+                <th>Symbol</th>
+                <th class="text-right">Quantity</th>
+                <th class="text-right">Avg. Cost</th>
+                <th class="text-right">Market Price</th>
+                <th class="text-right">Current Value</th>
+                <th class="text-right">Day Change %</th>
+                <th class="text-right">Net Change %</th>
+                <th class="text-right">Profit & Loss</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of filteredHoldings(); track item.symbol) {
+                <tr class="table-row-hover">
+                  <td class="td-name font-medium">
+                    {{ item.name }}
+                  </td>
+                  <td class="td-symbol">
+                    <span class="symbol-badge">{{ item.symbol }}</span>
+                  </td>
+                  <td class="text-right font-medium">{{ item.shares }}</td>
+                  <td class="text-right">₹{{ item.avgBuyPrice | number:'1.2-2' }}</td>
+                  <td class="text-right font-medium">₹{{ item.currentPrice | number:'1.2-2' }}</td>
+                  <td class="text-right font-bold text-slate">₹{{ item.currentValue | number:'1.2-2' }}</td>
+                  
+                  <td class="text-right font-medium" [ngClass]="item.dayChangePercent >= 0 ? 'green-text' : 'red-text'">
+                    {{ item.dayChangePercent >= 0 ? '+' : '' }}{{ item.dayChangePercent | number:'1.2-2' }}%
+                  </td>
+                  
+                  <td class="text-right font-medium" [ngClass]="item.pnlPercent >= 0 ? 'green-text' : 'red-text'">
+                    {{ item.pnlPercent >= 0 ? '+' : '' }}{{ item.pnlPercent | number:'1.2-2' }}%
+                  </td>
+                  
+                  <td class="text-right font-bold pnl-cell" [ngClass]="item.pnl >= 0 ? 'green-text' : 'red-text'">
+                    <div class="pnl-content-wrapper">
+                      <span>{{ item.pnl >= 0 ? '+' : '' }}₹{{ item.pnl | number:'1.2-2' }}</span>
+                      
+                      <button mat-icon-button [matMenuTriggerFor]="menu" class="action-menu-btn" (click)="$event.stopPropagation()">
+                        <mat-icon>more_vert</mat-icon>
+                      </button>
+                      
+                      <mat-menu #menu="matMenu" class="premium-menu">
+                        <button mat-menu-item (click)="onBuyMore(item.symbol)">
+                          <mat-icon class="menu-icon-buy">add_circle</mat-icon>
+                          <span>Buy More</span>
+                        </button>
+                        <button mat-menu-item (click)="onSell(item.symbol)">
+                          <mat-icon class="menu-icon-sell">remove_circle</mat-icon>
+                          <span>Sell</span>
+                        </button>
+                        <button mat-menu-item (click)="onAnalyze(item.symbol)">
+                          <mat-icon class="menu-icon-analyze">analytics</mat-icon>
+                          <span>Analyze Symbol</span>
+                        </button>
+                        <button mat-menu-item (click)="onAnalyze(item.symbol)">
+                          <mat-icon class="menu-icon-chart">show_chart</mat-icon>
+                          <span>View Chart</span>
+                        </button>
+                      </mat-menu>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+</div>

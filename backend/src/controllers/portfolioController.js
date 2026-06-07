@@ -17,17 +17,22 @@ const getPortfolio = async (req, res, next) => {
     const symbols = user.portfolio.map(h => h.symbol);
     const stocks = await Stock.find({ symbol: { $in: symbols } });
     
-    // Map symbols to current price for fast lookup
-    const pricesMap = {};
+    // Map symbols to current price and metadata for fast lookup
+    const stocksMap = {};
     stocks.forEach(stock => {
-      pricesMap[stock.symbol] = stock.price;
+      stocksMap[stock.symbol] = {
+        price: stock.price,
+        name: stock.name,
+        changePercent: stock.changePercent
+      };
     });
 
     let totalHoldingsValue = 0;
     let totalHoldingsCost = 0;
 
     const holdingsWithValuation = user.portfolio.map(holding => {
-      const currentPrice = pricesMap[holding.symbol] || holding.avgBuyPrice;
+      const stockInfo = stocksMap[holding.symbol];
+      const currentPrice = stockInfo ? stockInfo.price : holding.avgBuyPrice;
       const currentValue = holding.shares * currentPrice;
       const costBasis = holding.shares * holding.avgBuyPrice;
       const pnl = currentValue - costBasis;
@@ -38,12 +43,14 @@ const getPortfolio = async (req, res, next) => {
 
       return {
         symbol: holding.symbol,
+        name: stockInfo ? stockInfo.name : holding.symbol,
         shares: holding.shares,
         avgBuyPrice: holding.avgBuyPrice,
         currentPrice: currentPrice,
         currentValue: Math.round(currentValue * 100) / 100,
         pnl: Math.round(pnl * 100) / 100,
-        pnlPercent: Math.round(pnlPercent * 100) / 100
+        pnlPercent: Math.round(pnlPercent * 100) / 100,
+        dayChangePercent: stockInfo ? Math.round(stockInfo.changePercent * 100) / 100 : 0
       };
     });
 

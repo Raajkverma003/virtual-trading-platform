@@ -1,8 +1,14 @@
+.dashboard-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-height: 100%;
+}
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1.1fr 1.4fr;
   gap: 24px;
-  height: 100%;
 }
 
 .watchlist-section {
@@ -366,5 +372,19 @@ mat-card-title {
   }
   .watchlist-section {
     height: 450px;
+  }
+}
+
+/* Market Activity widgets section styling */
+.market-widgets-section {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 12px;
+}
+
+@media (max-width: 1024px) {
+  .market-widgets-section {
+    grid-template-columns: 1fr;
   }
 }

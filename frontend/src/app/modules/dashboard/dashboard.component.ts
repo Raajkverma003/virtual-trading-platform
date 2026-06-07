@@ -1,5 +1,7 @@
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
+import { StockMetricsWidgetComponent } from './components/stock-metrics-widget/stock-metrics-widget.component';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -39,7 +41,8 @@ interface StockData {
     MatSelectModule,
     MatIconModule,
     MatSnackBarModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    StockMetricsWidgetComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
@@ -52,12 +55,27 @@ export class DashboardComponent implements OnInit, OnDestroy {
   
   authService = inject(AuthService);
   wsService = inject(WebsocketService);
+  private route = inject(ActivatedRoute);
 
   stocks = signal<StockData[]>([]);
   selectedStock = signal<StockData | null>(null);
   loadingStocks = signal<boolean>(true);
   loadingTrade = signal<boolean>(false);
   tradeType = signal<'BUY' | 'SELL'>('BUY');
+  mostBought = signal<any[]>([]);
+
+  // Computed signals for real-time top 5 gainers and losers
+  gainers = computed(() => {
+    return [...this.stocks()]
+      .sort((a, b) => b.changePercent - a.changePercent)
+      .slice(0, 5);
+  });
+
+  losers = computed(() => {
+    return [...this.stocks()]
+      .sort((a, b) => a.changePercent - b.changePercent)
+      .slice(0, 5);
+  });
 
   private priceSub!: Subscription;
   tradeForm!: FormGroup;
@@ -66,6 +84,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.initForm();
     this.fetchStocks();
     this.subscribeToSocketPrices();
+    this.fetchMostBought();
   }
 
   ngOnDestroy(): void {
@@ -98,6 +117,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
       next: (res: any) => {
         this.stocks.set(res.data || []);
         this.loadingStocks.set(false);
+        
+        // Read query parameters to automatically select stock and action
+        const symbolParam = this.route.snapshot.queryParamMap.get('symbol');
+        const actionParam = this.route.snapshot.queryParamMap.get('action');
+        
+        if (symbolParam) {
+          const matched = this.stocks().find(s => s.symbol.toUpperCase() === symbolParam.toUpperCase());
+          if (matched) {
+            this.selectStock(matched);
+            if (actionParam === 'BUY' || actionParam === 'SELL') {
+              this.setTradeType(actionParam);
+            }
+            return;
+          }
+        }
+
         // Default to first stock if any exists
         if (this.stocks().length > 0) {
           this.selectStock(this.stocks()[0]);
@@ -152,7 +187,45 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.selectedStock.set(updatedSelected);
         }
       }
+
+      // Keep mostBought in sync with live updates
+      const currentMostBought = this.mostBought();
+      if (currentMostBought.length > 0) {
+        const updatedMostBought = currentMostBought.map(stock => {
+          const matchingUpdate = socketPrices.find(sp => sp.symbol === stock.symbol);
+          if (matchingUpdate) {
+            return {
+              ...stock,
+              price: matchingUpdate.price,
+              change: matchingUpdate.change,
+              changePercent: matchingUpdate.changePercent
+            };
+          }
+          return stock;
+        });
+        this.mostBought.set(updatedMostBought);
+      }
     });
+  }
+
+  private fetchMostBought(): void {
+    this.stockService.getMostBoughtStocks().subscribe({
+      next: (res: any) => {
+        if (res.success && res.data) {
+          this.mostBought.set(res.data);
+        }
+      },
+      error: (err) => {
+        console.error('Error fetching most bought stocks:', err);
+      }
+    });
+  }
+
+  selectFromWidget(symbol: string): void {
+    const matched = this.stocks().find(s => s.symbol.toUpperCase() === symbol.toUpperCase());
+    if (matched) {
+      this.selectStock(matched);
+    }
   }
 
   private clearFlashState(symbol: string): void {

@@ -1,0 +1,45 @@
+<mat-card class="metrics-widget-card glass-card">
+  <mat-card-header class="widget-header">
+    <mat-card-title class="widget-title">{{ title }}</mat-card-title>
+  </mat-card-header>
+  
+  <mat-card-content class="widget-content">
+    @if (stocks.length === 0) {
+      <div class="empty-widget-state">
+        <mat-icon class="empty-icon">trending_flat</mat-icon>
+        <p>No activity recorded</p>
+      </div>
+    } @else {
+      <div class="widget-list">
+        @for (stock of stocks; track stock.symbol; let idx = $index) {
+          <div 
+            class="widget-row"
+            [attr.id]="title.toLowerCase().replace(' ', '-') + '-row-' + idx"
+            (click)="selectStock(stock.symbol)"
+          >
+            <div class="widget-symbol-info">
+              <span class="symbol-badge">{{ stock.symbol }}</span>
+              <span class="stock-name">{{ stock.name }}</span>
+            </div>
+            
+            <div class="widget-metric-info">
+              <span class="price">{{ stock.price | currency:'USD':'symbol':'1.2-2' }}</span>
+              
+              @if (metricType === 'change') {
+                <span class="change" [ngClass]="stock.changePercent >= 0 ? 'green-text' : 'red-text'">
+                  <mat-icon class="mini-arrow">{{ stock.changePercent >= 0 ? 'arrow_drop_up' : 'arrow_drop_down' }}</mat-icon>
+                  {{ stock.changePercent | number:'1.2-2' }}%
+                </span>
+              } @else if (metricType === 'volume') {
+                <span class="volume-lbl">
+                  <mat-icon class="volume-icon">bar_chart</mat-icon>
+                  {{ stock.volume | number }} vol
+                </span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </mat-card-content>
+</mat-card>

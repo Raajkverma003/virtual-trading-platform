@@ -1,0 +1,156 @@
+.metrics-widget-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+  padding: 16px 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.widget-header {
+  border-bottom: 1px solid #edf2f7;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+
+.widget-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.75px;
+}
+
+.widget-content {
+  padding: 0;
+  flex: 1;
+}
+
+.widget-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.widget-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.widget-row:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.widget-symbol-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.symbol-badge {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 3px 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.25px;
+  flex-shrink: 0;
+}
+
+.stock-name {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.widget-metric-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.price {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.change {
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  margin-top: 1px;
+}
+
+.mini-arrow {
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+  line-height: 14px;
+}
+
+.volume-lbl {
+  font-size: 11px;
+  color: #6366f1;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.volume-icon {
+  width: 12px;
+  height: 12px;
+  font-size: 12px;
+  line-height: 12px;
+}
+
+.green-text {
+  color: #10b981 !important;
+}
+
+.red-text {
+  color: #ef4444 !important;
+}
+
+.empty-widget-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 32px 16px;
+  color: #94a3b8;
+}
+
+.empty-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+  margin-bottom: 8px;
+}
+
+.empty-widget-state p {
+  margin: 0;
+  font-size: 12px;
+}

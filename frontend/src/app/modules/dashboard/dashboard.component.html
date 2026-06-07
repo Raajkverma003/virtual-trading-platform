@@ -1,4 +1,5 @@
-<div class="dashboard-grid animate-fade-in">
+<div class="dashboard-wrapper animate-fade-in">
+  <div class="dashboard-grid">
   <!-- Left side: Market Watchlist -->
   <div class="watchlist-section">
     <div class="section-header">
@@ -155,4 +156,29 @@
       </div>
     }
   </div>
-</div>
+  </div> <!-- dashboard-grid end -->
+
+  <!-- Market Activity widgets row -->
+  <div class="market-widgets-section">
+    <app-stock-metrics-widget 
+      title="Top Gainers" 
+      [stocks]="gainers()" 
+      metricType="change"
+      (stockSelected)="selectFromWidget($event)"
+    ></app-stock-metrics-widget>
+
+    <app-stock-metrics-widget 
+      title="Top Losers" 
+      [stocks]="losers()" 
+      metricType="change"
+      (stockSelected)="selectFromWidget($event)"
+    ></app-stock-metrics-widget>
+
+    <app-stock-metrics-widget 
+      title="Most Bought" 
+      [stocks]="mostBought()" 
+      metricType="volume"
+      (stockSelected)="selectFromWidget($event)"
+    ></app-stock-metrics-widget>
+  </div>
+</div> <!-- dashboard-wrapper end -->

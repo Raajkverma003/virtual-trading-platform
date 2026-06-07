@@ -1,0 +1,35 @@
+<mat-toolbar class="kite-header">
+  <div class="header-left">
+    <span class="logo-text" routerLink="/dashboard">
+      <span class="brand-blue">V-</span>Kite
+    </span>
+  </div>
+
+  <div class="header-right" *ngIf="authService.currentUser()">
+    <span class="connection-status" [title]="wsService.isConnected() ? 'Real-time feed active' : 'Live updates disconnected'">
+      <span class="status-dot" [class.connected]="wsService.isConnected()"></span>
+      {{ wsService.isConnected() ? 'Live' : 'Offline' }}
+    </span>
+
+    <span class="funds-badge">
+      Funds: <strong class="funds-amount">{{ authService.currentUser().balance | currency:'USD':'symbol':'1.2-2' }}</strong>
+    </span>
+
+    <button mat-button [matMenuTriggerFor]="menu" class="user-menu-btn">
+      <mat-icon>account_circle</mat-icon>
+      <span class="username">{{ authService.currentUser().username }}</span>
+    </button>
+    <mat-menu #menu="matMenu" xPosition="before">
+      <div class="menu-profile-info">
+        <p class="profile-name">{{ authService.currentUser().username }}</p>
+        <p class="profile-email">{{ authService.currentUser().email }}</p>
+        <p class="profile-role" *ngIf="authService.currentUser().role">Role: <strong>{{ authService.currentUser().role }}</strong></p>
+      </div>
+      <hr class="menu-divider" />
+      <button mat-menu-item (click)="authService.logout()">
+        <mat-icon>exit_to_app</mat-icon>
+        <span>Logout</span>
+      </button>
+    </mat-menu>
+  </div>
+</mat-toolbar>

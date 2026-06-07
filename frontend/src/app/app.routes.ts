@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 
+// Routing configurations for virtual trading app
 export const routes: Routes = [
   {
     path: 'login',
@@ -34,6 +35,11 @@ export const routes: Routes = [
   {
     path: 'reports',
     loadComponent: () => import('./modules/reports/reports.component').then(m => m.ReportsComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'holdings',
+    loadComponent: () => import('./modules/holdings/holdings.component').then(m => m.HoldingsComponent),
     canActivate: [authGuard]
   },
   {

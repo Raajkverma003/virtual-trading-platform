@@ -16,4 +16,8 @@ export class StockService {
   getStockBySymbol(symbol: string): Observable<any> {
     return this.http.get(`${this.apiUrl}/${symbol}`);
   }
+
+  getMostBoughtStocks(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/stats/most-bought`);
+  }
 }

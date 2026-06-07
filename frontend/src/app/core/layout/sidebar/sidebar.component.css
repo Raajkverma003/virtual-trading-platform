@@ -1,0 +1,40 @@
+.kite-sidebar {
+  width: 220px;
+  background-color: #ffffff;
+  border-right: 1px solid #e0e0e0;
+  height: calc(100vh - 60px);
+  padding: 16px 0;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+.sidebar-list {
+  padding: 0;
+}
+a.mat-mdc-list-item {
+  height: 44px;
+  color: #555555;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  margin: 4px 8px;
+  border-radius: 4px;
+  width: auto;
+  display: flex;
+}
+a.mat-mdc-list-item:hover {
+  background-color: #f9f9f9;
+  color: #ff5722;
+}
+.active-link {
+  background-color: #fff3f0 !important;
+  color: #ff5722 !important;
+}
+.active-link mat-icon {
+  color: #ff5722 !important;
+}
+.nav-label {
+  font-weight: 500;
+}
+mat-icon {
+  color: #777777;
+}
