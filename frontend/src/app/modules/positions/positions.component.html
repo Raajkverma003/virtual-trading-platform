@@ -1,0 +1,152 @@
+<div class="positions-container animate-fade-in">
+  <div class="positions-header-row">
+    <div class="positions-header">
+      <h1>Active Positions</h1>
+      <p class="subtitle">Real-time intraday positions. Stocks settle to holdings; F&O contracts cash-settle upon closing.</p>
+    </div>
+
+    <div class="settlement-action">
+      <button 
+        mat-flat-button 
+        color="warn" 
+        (click)="onSettle()"
+        [disabled]="positions().length === 0 || settling()"
+        class="settle-btn"
+      >
+        <mat-icon>schedule_send</mat-icon>
+        {{ settling() ? 'Settling...' : 'Settle Today\'s Positions' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-row">
+    <mat-card class="kpi-card glass-card">
+      <div class="kpi-content">
+        <div class="kpi-icon-wrapper bg-blue-tint text-blue">
+          <mat-icon class="kpi-icon">account_balance_wallet</mat-icon>
+        </div>
+        <div class="kpi-details">
+          <span class="kpi-lbl">Active Cash</span>
+          <h2 class="kpi-val">{{ cashBalance() | currency:'USD':'symbol':'1.2-2' }}</h2>
+        </div>
+      </div>
+    </mat-card>
+
+    <mat-card class="kpi-card glass-card">
+      <div class="kpi-content">
+        <div 
+          class="kpi-icon-wrapper"
+          [ngClass]="totalPnl() >= 0 ? 'bg-green-tint text-green' : 'bg-red-tint text-red'"
+        >
+          <mat-icon class="kpi-icon">{{ totalPnl() >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+        </div>
+        <div class="kpi-details">
+          <span class="kpi-lbl">Total Unrealized P&L</span>
+          <h2 
+            class="kpi-val"
+            [ngClass]="totalPnl() >= 0 ? 'green-text' : 'red-text'"
+          >
+            {{ totalPnl() >= 0 ? '+' : '' }}{{ totalPnl() | currency:'USD':'symbol':'1.2-2' }}
+          </h2>
+        </div>
+      </div>
+    </mat-card>
+  </div>
+
+  @if (loading()) {
+    <div class="spinner-container">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else {
+    @if (positions().length > 0) {
+      <mat-card class="table-card glass-card">
+        <div class="table-responsive">
+          <table class="positions-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Symbol</th>
+                <th>Strike</th>
+                <th>Expiry</th>
+                <th class="text-right">Qty</th>
+                <th class="text-right">Avg. Price</th>
+                <th class="text-right">LTP (Live)</th>
+                <th class="text-right">P&L</th>
+                <th class="text-right">Return %</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (pos of positions(); track pos._id) {
+                <tr 
+                  class="table-row"
+                  [class.flash-up]="pos.flashState === 'up'"
+                  [class.flash-down]="pos.flashState === 'down'"
+                >
+                  <td>
+                    <span 
+                      class="type-badge"
+                      [ngClass]="{
+                        'badge-stock': pos.assetType === 'STOCK',
+                        'badge-future': pos.assetType === 'FUTURE',
+                        'badge-option': pos.assetType === 'OPTION'
+                      }"
+                    >
+                      {{ getAssetTypeLabel(pos) }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="symbol-info">
+                      <span class="symbol-badge">{{ pos.symbol }}</span>
+                      <span class="symbol-name">{{ pos.name }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="strike-text">{{ getStrikeLabel(pos) }}</span>
+                  </td>
+                  <td>
+                    <span class="expiry-text">{{ getExpiryLabel(pos) }}</span>
+                  </td>
+                  <td 
+                    class="text-right font-semibold"
+                    [ngClass]="pos.quantity >= 0 ? 'green-text' : 'red-text'"
+                  >
+                    {{ pos.quantity >= 0 ? '+' : '' }}{{ pos.quantity }}
+                  </td>
+                  <td class="text-right font-medium">
+                    {{ pos.avgPrice | currency:'USD':'symbol':'1.2-2' }}
+                  </td>
+                  <td class="text-right font-medium">
+                    {{ pos.ltp | currency:'USD':'symbol':'1.2-2' }}
+                  </td>
+                  <td 
+                    class="text-right font-bold"
+                    [ngClass]="pos.pnl >= 0 ? 'green-text' : 'red-text'"
+                  >
+                    {{ pos.pnl >= 0 ? '+' : '' }}{{ pos.pnl | currency:'USD':'symbol':'1.2-2' }}
+                  </td>
+                  <td 
+                    class="text-right font-semibold"
+                    [ngClass]="pos.pnlPercent >= 0 ? 'green-text' : 'red-text'"
+                  >
+                    <span class="pnl-pct-wrapper">
+                      <mat-icon class="arrow-icon">{{ pos.pnlPercent >= 0 ? 'arrow_drop_up' : 'arrow_drop_down' }}</mat-icon>
+                      {{ pos.pnlPercent | number:'1.2-2' }}%
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </mat-card>
+    } @else {
+      <!-- Empty positions state -->
+      <div class="empty-positions-card glass-card">
+        <mat-icon class="empty-icon">work_outline</mat-icon>
+        <h3>No Active Positions</h3>
+        <p>Your intraday positions will appear here when you submit buy/sell stock or F&O derivative trades. Stock trades will settle into your portfolio holdings after daily settlement.</p>
+      </div>
+    }
+  }
+</div>

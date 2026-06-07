@@ -16,4 +16,12 @@ export class PortfolioService {
   getPortfolioHistory(): Observable<any> {
     return this.http.get(`${this.apiUrl}/history`);
   }
+
+  getPositions(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/positions`);
+  }
+
+  settlePositions(): Observable<any> {
+    return this.http.post(`${this.apiUrl}/positions/settle`, {});
+  }
 }

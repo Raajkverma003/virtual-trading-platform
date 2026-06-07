@@ -56,6 +56,42 @@
 
     <div class="form-inputs">
       <mat-form-field appearance="outline">
+        <mat-label>Asset Type</mat-label>
+        <mat-select formControlName="assetType">
+          <mat-option value="STOCK">Stock</mat-option>
+          <mat-option value="FUTURE">Future (FUT)</mat-option>
+          <mat-option value="OPTION">Option (OPT)</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      @if (tradeForm.get('assetType')?.value === 'OPTION') {
+        <mat-form-field appearance="outline" class="animate-fade-in">
+          <mat-label>Option Type</mat-label>
+          <mat-select formControlName="optionType">
+            <mat-option value="CALL">Call (CE)</mat-option>
+            <mat-option value="PUT">Put (PE)</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="animate-fade-in">
+          <mat-label>Strike Price ($)</mat-label>
+          <input matInput type="number" formControlName="strikePrice" min="0.01" step="1" />
+          <mat-error *ngIf="tradeForm.get('strikePrice')?.hasError('required')">Strike price is required</mat-error>
+        </mat-form-field>
+      }
+
+      @if (tradeForm.get('assetType')?.value === 'OPTION' || tradeForm.get('assetType')?.value === 'FUTURE') {
+        <mat-form-field appearance="outline" class="animate-fade-in">
+          <mat-label>Expiry Date</mat-label>
+          <mat-select formControlName="expiry">
+            <mat-option value="26-Jun-2026">26-Jun-2026</mat-option>
+            <mat-option value="17-Jul-2026">17-Jul-2026</mat-option>
+            <mat-option value="21-Aug-2026">21-Aug-2026</mat-option>
+          </mat-select>
+        </mat-form-field>
+      }
+
+      <mat-form-field appearance="outline">
         <mat-label>Order Type</mat-label>
         <mat-select formControlName="orderType">
           <mat-option value="MARKET">Market Order</mat-option>

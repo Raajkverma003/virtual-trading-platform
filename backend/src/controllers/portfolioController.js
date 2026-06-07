@@ -1,6 +1,8 @@
 const User = require('../models/User');
 const Stock = require('../models/Stock');
 const PortfolioHistory = require('../models/PortfolioHistory');
+const Position = require('../models/Position');
+const { getAssetPrice } = require('../services/tradeEngine');
 
 // @desc    Get user's portfolio breakdown, holdings valuation and P&L
 // @route   GET /api/portfolio
@@ -95,7 +97,144 @@ const getPortfolioHistory = async (req, res, next) => {
   }
 };
 
+// @desc    Get user's active intraday positions
+// @route   GET /api/portfolio/positions
+// @access  Private
+const getPositions = async (req, res, next) => {
+  try {
+    const positions = await Position.find({ user: req.user._id });
+    
+    // Fetch stock info for underlying tickers
+    const symbols = [...new Set(positions.map(p => p.symbol))];
+    const stocks = await Stock.find({ symbol: { $in: symbols } });
+    
+    const stocksMap = {};
+    stocks.forEach(stock => {
+      stocksMap[stock.symbol] = stock;
+    });
+
+    const positionsWithLtp = positions.map(pos => {
+      const stockInfo = stocksMap[pos.symbol];
+      const stockPrice = stockInfo ? stockInfo.price : pos.avgPrice;
+      const ltp = getAssetPrice(pos.assetType, stockPrice, pos.optionType, pos.strikePrice);
+      
+      let pnl = 0;
+      let pnlPercent = 0;
+      if (pos.quantity > 0) {
+        pnl = pos.quantity * (ltp - pos.avgPrice);
+        pnlPercent = pos.avgPrice > 0 ? ((ltp - pos.avgPrice) / pos.avgPrice) * 100 : 0;
+      } else if (pos.quantity < 0) {
+        pnl = Math.abs(pos.quantity) * (pos.avgPrice - ltp);
+        pnlPercent = pos.avgPrice > 0 ? ((pos.avgPrice - ltp) / pos.avgPrice) * 100 : 0;
+      }
+
+      return {
+        _id: pos._id,
+        symbol: pos.symbol,
+        name: stockInfo ? stockInfo.name : pos.symbol,
+        assetType: pos.assetType,
+        optionType: pos.optionType,
+        strikePrice: pos.strikePrice,
+        expiry: pos.expiry,
+        quantity: pos.quantity,
+        avgPrice: pos.avgPrice,
+        ltp: Math.round(ltp * 100) / 100,
+        pnl: Math.round(pnl * 100) / 100,
+        pnlPercent: Math.round(pnlPercent * 100) / 100
+      };
+    });
+
+    const user = await User.findById(req.user._id);
+
+    res.json({
+      success: true,
+      balance: user ? user.balance : 0,
+      data: positionsWithLtp
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Settle all active positions (market close simulation)
+// @route   POST /api/portfolio/positions/settle
+// @access  Private
+const settlePositions = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      res.status(404);
+      throw new Error('User not found');
+    }
+
+    const positions = await Position.find({ user: req.user._id });
+    if (positions.length === 0) {
+      return res.json({
+        success: true,
+        message: 'No active positions to settle'
+      });
+    }
+
+    const symbols = [...new Set(positions.map(p => p.symbol))];
+    const stocks = await Stock.find({ symbol: { $in: symbols } });
+    const stocksMap = {};
+    stocks.forEach(stock => {
+      stocksMap[stock.symbol] = stock;
+    });
+
+    for (const pos of positions) {
+      const stockInfo = stocksMap[pos.symbol];
+      const stockPrice = stockInfo ? stockInfo.price : pos.avgPrice;
+      const ltp = getAssetPrice(pos.assetType, stockPrice, pos.optionType, pos.strikePrice);
+
+      if (pos.assetType === 'STOCK' && pos.quantity > 0) {
+        // Merge long stock position into settled holdings
+        const holdingIndex = user.portfolio.findIndex(h => h.symbol === pos.symbol);
+        if (holdingIndex > -1) {
+          const holding = user.portfolio[holdingIndex];
+          const oldCost = holding.shares * holding.avgBuyPrice;
+          const newCost = oldCost + (pos.quantity * pos.avgPrice);
+          holding.shares += pos.quantity;
+          holding.avgBuyPrice = newCost / holding.shares;
+        } else {
+          user.portfolio.push({
+            symbol: pos.symbol,
+            shares: pos.quantity,
+            avgBuyPrice: pos.avgPrice
+          });
+        }
+      } else {
+        // Short stock positions and F&O are cash-settled/closed
+        if (pos.quantity > 0) {
+          // Sell long asset back to cash
+          user.balance += pos.quantity * ltp;
+        } else if (pos.quantity < 0) {
+          // Buy back short asset from cash
+          user.balance -= Math.abs(pos.quantity) * ltp;
+        }
+      }
+    }
+
+    // Save user updates and delete all positions
+    await user.save();
+    await Position.deleteMany({ user: req.user._id });
+
+    res.json({
+      success: true,
+      message: 'Intraday positions settled successfully!',
+      data: {
+        balance: user.balance,
+        portfolio: user.portfolio
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getPortfolio,
-  getPortfolioHistory
+  getPortfolioHistory,
+  getPositions,
+  settlePositions
 };

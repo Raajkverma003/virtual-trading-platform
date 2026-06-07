@@ -34,6 +34,8 @@ const checkPendingOrders = async (stockPricesMap) => {
   }
 };
 
+const { executeTrade } = require('./tradeEngine');
+
 const executeLimitOrder = async (order, executionPrice) => {
   try {
     const user = await User.findById(order.user);
@@ -56,51 +58,25 @@ const executeLimitOrder = async (order, executionPrice) => {
         });
         return;
       }
-
-      // Deduct balance and update portfolio
-      user.balance -= totalCost;
-      const holdingIndex = user.portfolio.findIndex(item => item.symbol === order.symbol);
-      if (holdingIndex > -1) {
-        const holding = user.portfolio[holdingIndex];
-        const oldTotalCost = holding.shares * holding.avgBuyPrice;
-        const newTotalCost = oldTotalCost + totalCost;
-        holding.shares += order.shares;
-        holding.avgBuyPrice = newTotalCost / holding.shares;
-      } else {
-        user.portfolio.push({
-          symbol: order.symbol,
-          shares: order.shares,
-          avgBuyPrice: executionPrice
-        });
-      }
-    } else if (order.type === 'SELL') {
-      const holdingIndex = user.portfolio.findIndex(item => item.symbol === order.symbol);
-      if (holdingIndex === -1 || user.portfolio[holdingIndex].shares < order.shares) {
-        order.status = 'CANCELLED';
-        await order.save();
-
-        sendToUser(user._id.toString(), 'order-cancelled', {
-          orderId: order._id,
-          symbol: order.symbol,
-          reason: 'Insufficient shares to execute sell order'
-        });
-        return;
-      }
-
-      // Add to balance and update portfolio
-      const proceeds = order.shares * executionPrice;
-      user.balance += proceeds;
-      user.portfolio[holdingIndex].shares -= order.shares;
-      if (user.portfolio[holdingIndex].shares <= 0.0001) {
-        user.portfolio.splice(holdingIndex, 1);
-      }
     }
+
+    // Execute trade using common trade engine
+    await executeTrade(
+      user,
+      order.symbol,
+      order.type,
+      order.assetType || 'STOCK',
+      order.optionType,
+      order.strikePrice,
+      order.expiry,
+      order.shares,
+      executionPrice
+    );
 
     // Complete transaction
     order.status = 'COMPLETED';
     order.price = executionPrice;
     await order.save();
-    await user.save();
 
     console.log(`Limit ${order.type} Order executed for user ${user.username}: ${order.shares} ${order.symbol} @ $${executionPrice}`);
 

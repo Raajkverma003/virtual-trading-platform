@@ -51,6 +51,25 @@ const transactionSchema = new mongoose.Schema(
       enum: ['PENDING', 'COMPLETED', 'CANCELLED'],
       default: 'COMPLETED'
     },
+    assetType: {
+      type: String,
+      required: true,
+      enum: ['STOCK', 'FUTURE', 'OPTION'],
+      default: 'STOCK'
+    },
+    optionType: {
+      type: String,
+      enum: ['CALL', 'PUT', null],
+      default: null
+    },
+    strikePrice: {
+      type: Number,
+      default: null
+    },
+    expiry: {
+      type: String,
+      default: null
+    },
     timestamp: {
       type: Date,
       default: Date.now
