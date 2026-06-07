@@ -76,76 +76,8 @@
             </div>
           </div>
 
-          <!-- Order Box -->
-          <form [formGroup]="tradeForm" (ngSubmit)="submitOrder()" class="trade-form">
-            <div class="action-toggle">
-              <button 
-                type="button" 
-                mat-button 
-                class="action-btn buy-btn" 
-                [class.active]="tradeType() === 'BUY'"
-                (click)="setTradeType('BUY')"
-              >BUY</button>
-              <button 
-                type="button" 
-                mat-button 
-                class="action-btn sell-btn" 
-                [class.active]="tradeType() === 'SELL'"
-                (click)="setTradeType('SELL')"
-              >SELL</button>
-            </div>
-
-            <div class="form-inputs">
-              <mat-form-field appearance="outline">
-                <mat-label>Order Type</mat-label>
-                <mat-select formControlName="orderType">
-                  <mat-option value="MARKET">Market Order</mat-option>
-                  <mat-option value="LIMIT">Limit Order</mat-option>
-                </mat-select>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Shares</mat-label>
-                <input matInput type="number" formControlName="shares" min="1" step="1" />
-                <mat-error *ngIf="tradeForm.get('shares')?.hasError('required')">Shares quantity is required</mat-error>
-                <mat-error *ngIf="tradeForm.get('shares')?.hasError('min')">Must buy/sell at least 1 share</mat-error>
-              </mat-form-field>
-
-              @if (tradeForm.get('orderType')?.value === 'LIMIT') {
-                <mat-form-field appearance="outline">
-                  <mat-label>Limit Price ($)</mat-label>
-                  <input matInput type="number" formControlName="limitPrice" min="0.01" step="0.01" />
-                  <mat-error *ngIf="tradeForm.get('limitPrice')?.hasError('required')">Limit price is required</mat-error>
-                </mat-form-field>
-              }
-            </div>
-
-            <!-- Live estimate -->
-            <div class="estimate-box">
-              <div class="estimate-row">
-                <span>Current Cash Balance</span>
-                <strong>{{ authService.currentUser()?.balance | currency:'USD':'symbol':'1.2-2' }}</strong>
-              </div>
-              <div class="estimate-row font-large">
-                <span>Estimated Total Cost</span>
-                <strong [class.red-text]="isOverdrawn()">{{ estimatedCost() | currency:'USD':'symbol':'1.2-2' }}</strong>
-              </div>
-            </div>
-
-            <button 
-              mat-raised-button 
-              class="place-order-btn" 
-              [ngClass]="tradeType() === 'BUY' ? 'bg-green' : 'bg-red'"
-              type="submit" 
-              [disabled]="loadingTrade() || tradeForm.invalid || isOverdrawn()"
-            >
-              @if (loadingTrade()) {
-                <span>Executing Trade...</span>
-              } @else {
-                <span>Place {{ tradeType() }} {{ tradeForm.get('orderType')?.value }} Order</span>
-              }
-            </button>
-          </form>
+          <!-- Reusable Order Box Component -->
+          <app-trade-form [stock]="selectedStock()" [initialAction]="tradeType()"></app-trade-form>
         </mat-card-content>
       </mat-card>
     } @else {

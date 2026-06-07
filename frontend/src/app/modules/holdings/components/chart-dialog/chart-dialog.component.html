@@ -1,0 +1,17 @@
+<div class="dialog-container">
+  <div class="dialog-header">
+    <div class="title-info">
+      <mat-icon class="header-icon">analytics</mat-icon>
+      <h2>{{ data.symbol }} Live Interactive Chart</h2>
+    </div>
+    <button mat-icon-button (click)="close()" class="close-btn" aria-label="Close chart dialog">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  
+  <div class="dialog-body">
+    <div class="chart-wrapper">
+      <div id="tradingview_chart_container"></div>
+    </div>
+  </div>
+</div>

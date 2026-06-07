@@ -1,0 +1,245 @@
+<div class="watchlist-wrapper animate-fade-in">
+  <div class="watchlist-header-bar">
+    <div class="header-title-section">
+      <h1>Watchlists</h1>
+      <span class="live-indicator">
+        <span class="pulse-dot"></span> Real-time Live
+      </span>
+    </div>
+    
+    <!-- Watchlist Tab Bar -->
+    <div class="tabs-container">
+      <div class="watchlist-tabs">
+        @for (wl of watchlists(); track wl._id) {
+          <button 
+            type="button"
+            class="tab-btn" 
+            [class.active]="selectedWatchlist()?._id === wl._id"
+            (click)="selectWatchlist(wl)"
+          >
+            {{ wl.name }}
+          </button>
+        }
+
+        <!-- Add Watchlist Button -->
+        @if (watchlists().length < 5) {
+          <button 
+            type="button"
+            class="add-tab-btn"
+            (click)="showCreateForm.set(!showCreateForm())"
+            [class.form-open]="showCreateForm()"
+          >
+            <mat-icon>{{ showCreateForm() ? 'close' : 'add' }}</mat-icon>
+            Create Watchlist
+          </button>
+        } @else {
+          <span class="limit-msg">
+            <mat-icon>info</mat-icon> Max lists (5) reached
+          </span>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Watchlist Inline Form -->
+  @if (showCreateForm()) {
+    <div class="create-form-panel glass-card">
+      <h3>Create New Watchlist</h3>
+      <div class="form-row">
+        <input 
+          type="text" 
+          placeholder="e.g. High Growth, Tech Stocks" 
+          [ngModel]="newWatchlistName()" 
+          (ngModelChange)="newWatchlistName.set($event)"
+          (keyup.enter)="onCreateWatchlist()"
+          maxlength="25"
+          class="watchlist-name-input"
+        />
+        <button 
+          mat-flat-button 
+          color="primary"
+          (click)="onCreateWatchlist()"
+          [disabled]="!newWatchlistName().trim()"
+          class="create-submit-btn"
+        >
+          Create
+        </button>
+        <button 
+          mat-button 
+          (click)="showCreateForm.set(false)"
+          class="create-cancel-btn"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="spinner-container">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else {
+    @if (selectedWatchlist(); as wl) {
+      <div class="active-watchlist-section">
+        
+        <!-- Controls & Search -->
+        <div class="watchlist-controls glass-card">
+          <div class="wl-meta-info">
+            <h2>{{ wl.name }}</h2>
+            <span class="count-badge">{{ wl.symbols.length }} / 50 symbols</span>
+            <button 
+              mat-icon-button 
+              color="warn" 
+              (click)="onDeleteWatchlist(wl._id)" 
+              title="Delete Watchlist"
+              class="delete-wl-btn"
+            >
+              <mat-icon>delete_forever</mat-icon>
+            </button>
+          </div>
+
+          <!-- Add Symbol Search Box with custom autocomplete suggestion panel -->
+          <div class="search-box-container">
+            <div class="search-input-wrapper">
+              <mat-icon class="search-icon">search</mat-icon>
+              <input 
+                type="text" 
+                placeholder="Search symbol or company name to add... (e.g. AAPL, NVDA)" 
+                [ngModel]="searchTerm()"
+                (ngModelChange)="searchTerm.set($event)"
+                (focus)="showSearchSuggestions.set(true)"
+                (blur)="showSearchSuggestions.set(false)"
+                class="stock-search-input"
+                [disabled]="wl.symbols.length >= 50"
+              />
+              @if (searchTerm()) {
+                <button type="button" class="clear-search-btn" (click)="searchTerm.set('')">
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
+            </div>
+
+            <!-- Suggestion Panel (prevent blur from closing before click is registered by using mousedown) -->
+            @if (showSearchSuggestions() && filteredSearchStocks().length > 0) {
+              <div class="suggestions-overlay glass-card" (mousedown)="$event.preventDefault()">
+                @for (stock of filteredSearchStocks(); track stock.symbol) {
+                  <div class="suggestion-item" (click)="onAddSymbol(stock.symbol)">
+                    <div class="stock-details">
+                      <span class="suggest-symbol">{{ stock.symbol }}</span>
+                      <span class="suggest-name">{{ stock.name }}</span>
+                    </div>
+                    <div class="suggest-action">
+                      <span class="suggest-price">{{ stock.price | currency:'USD':'symbol':'1.2-2' }}</span>
+                      <button mat-icon-button class="add-symbol-btn">
+                        <mat-icon>add_circle_outline</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else if (showSearchSuggestions() && searchTerm().trim().length > 0) {
+              <div class="suggestions-overlay glass-card no-results" (mousedown)="$event.preventDefault()">
+                No matching, untracked symbols found.
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Symbols Grid / Table -->
+        @if (wl.populatedSymbols.length > 0) {
+          <div class="table-container glass-card">
+            <table class="watchlist-table">
+              <thead>
+                <tr>
+                  <th>Symbol</th>
+                  <th>Company Name</th>
+                  <th class="text-right">Price</th>
+                  <th class="text-right">Change</th>
+                  <th class="text-right">Change %</th>
+                  <th class="text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (stock of wl.populatedSymbols; track stock.symbol) {
+                  <tr 
+                    [class.flash-up]="stock.flashState === 'up'"
+                    [class.flash-down]="stock.flashState === 'down'"
+                  >
+                    <td>
+                      <span class="stock-symbol-badge">{{ stock.symbol }}</span>
+                    </td>
+                    <td>
+                      <span class="stock-name-text">{{ stock.name }}</span>
+                    </td>
+                    <td class="text-right font-medium">
+                      {{ stock.price | currency:'USD':'symbol':'1.2-2' }}
+                    </td>
+                    <td 
+                      class="text-right font-semibold"
+                      [ngClass]="stock.change >= 0 ? 'green-text' : 'red-text'"
+                    >
+                      {{ stock.change >= 0 ? '+' : '' }}{{ stock.change | currency:'USD':'symbol':'1.2-2' }}
+                    </td>
+                    <td 
+                      class="text-right font-semibold"
+                      [ngClass]="stock.changePercent >= 0 ? 'green-text' : 'red-text'"
+                    >
+                      <span class="change-pct-wrapper">
+                        <mat-icon class="mini-arrow">{{ stock.changePercent >= 0 ? 'arrow_drop_up' : 'arrow_drop_down' }}</mat-icon>
+                        {{ stock.changePercent | number:'1.2-2' }}%
+                      </span>
+                    </td>
+                    <td>
+                      <div class="actions-cell">
+                        <button 
+                          mat-flat-button 
+                          class="action-btn buy-btn"
+                          (click)="onBuy(stock, $event)"
+                        >
+                          BUY
+                        </button>
+                        <button 
+                          mat-flat-button 
+                          class="action-btn sell-btn"
+                          (click)="onSell(stock, $event)"
+                        >
+                          SELL
+                        </button>
+                        <button 
+                          mat-icon-button 
+                          color="warn" 
+                          (click)="onRemoveSymbol(stock.symbol, $event)" 
+                          title="Remove Symbol"
+                          class="remove-symbol-btn"
+                        >
+                          <mat-icon>remove_circle</mat-icon>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <!-- Empty Watchlist state -->
+          <div class="empty-watchlist-card glass-card">
+            <mat-icon class="empty-icon">star_outline</mat-icon>
+            <h3>Watchlist is Empty</h3>
+            <p>Search and add stock symbols using the search bar above to monitor live prices, changes, and place virtual orders.</p>
+          </div>
+        }
+
+      </div>
+    } @else {
+      <!-- Empty Watchlist lists state -->
+      <div class="no-watchlists-card glass-card">
+        <mat-icon class="empty-icon">visibility_off</mat-icon>
+        <h3>No Watchlists Created</h3>
+        <p>You have not created any watchlists yet. Start by typing a name above and clicking "Create Watchlist" (up to 5 lists allowed).</p>
+      </div>
+    }
+  }
+</div>

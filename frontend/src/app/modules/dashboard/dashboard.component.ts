@@ -2,18 +2,14 @@ import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { StockMetricsWidgetComponent } from './components/stock-metrics-widget/stock-metrics-widget.component';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { TradeFormComponent } from './components/trade-form/trade-form.component';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Subscription } from 'rxjs';
 import { StockService } from '../../core/services/stock.service';
-import { TradeService } from '../../core/services/trade.service';
 import { AuthService } from '../../core/services/auth.service';
 import { WebsocketService } from '../../core/services/websocket.service';
 
@@ -33,24 +29,19 @@ interface StockData {
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule,
     MatCardModule,
     MatButtonModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
     MatIconModule,
     MatSnackBarModule,
     MatProgressSpinnerModule,
-    StockMetricsWidgetComponent
+    StockMetricsWidgetComponent,
+    TradeFormComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent implements OnInit, OnDestroy {
-  private fb = inject(FormBuilder);
   private stockService = inject(StockService);
-  private tradeService = inject(TradeService);
   private snackBar = inject(MatSnackBar);
   
   authService = inject(AuthService);
@@ -60,7 +51,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   stocks = signal<StockData[]>([]);
   selectedStock = signal<StockData | null>(null);
   loadingStocks = signal<boolean>(true);
-  loadingTrade = signal<boolean>(false);
   tradeType = signal<'BUY' | 'SELL'>('BUY');
   mostBought = signal<any[]>([]);
 
@@ -78,10 +68,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   });
 
   private priceSub!: Subscription;
-  tradeForm!: FormGroup;
 
   ngOnInit(): void {
-    this.initForm();
     this.fetchStocks();
     this.subscribeToSocketPrices();
     this.fetchMostBought();
@@ -91,25 +79,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.priceSub) {
       this.priceSub.unsubscribe();
     }
-  }
-
-  private initForm(): void {
-    this.tradeForm = this.fb.group({
-      orderType: ['MARKET', Validators.required],
-      shares: [null, [Validators.required, Validators.min(1)]],
-      limitPrice: [null]
-    });
-
-    // Toggle limitPrice validators based on orderType
-    this.tradeForm.get('orderType')?.valueChanges.subscribe(type => {
-      const limitPriceCtrl = this.tradeForm.get('limitPrice');
-      if (type === 'LIMIT') {
-        limitPriceCtrl?.setValidators([Validators.required, Validators.min(0.01)]);
-      } else {
-        limitPriceCtrl?.clearValidators();
-      }
-      limitPriceCtrl?.updateValueAndValidity();
-    });
   }
 
   private fetchStocks(): void {
@@ -240,83 +209,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   selectStock(stock: StockData): void {
     this.selectedStock.set(stock);
-    // Reset shares form inputs when selected stock changes
-    this.tradeForm.get('shares')?.reset();
-    this.tradeForm.get('limitPrice')?.reset();
   }
 
   setTradeType(type: 'BUY' | 'SELL'): void {
     this.tradeType.set(type);
-  }
-
-  estimatedCost(): number {
-    const shares = this.tradeForm.get('shares')?.value || 0;
-    const isLimit = this.tradeForm.get('orderType')?.value === 'LIMIT';
-    const price = isLimit 
-      ? this.tradeForm.get('limitPrice')?.value || 0
-      : this.selectedStock()?.price || 0;
-    return shares * price;
-  }
-
-  isOverdrawn(): boolean {
-    if (this.tradeType() === 'SELL') return false;
-    const user = this.authService.currentUser();
-    const balance = user ? user.balance : 0;
-    return this.estimatedCost() > balance;
-  }
-
-  submitOrder(): void {
-    if (this.tradeForm.invalid) return;
-    const selected = this.selectedStock();
-    if (!selected) return;
-
-    this.loadingTrade.set(true);
-    const formValue = this.tradeForm.value;
-
-    const payload = {
-      symbol: selected.symbol,
-      type: this.tradeType(),
-      orderType: formValue.orderType,
-      shares: formValue.shares,
-      limitPrice: formValue.orderType === 'LIMIT' ? formValue.limitPrice : undefined
-    };
-
-    this.tradeService.placeOrder(payload).subscribe({
-      next: (res: any) => {
-        this.loadingTrade.set(false);
-        this.snackBar.open(res.message || 'Order submitted successfully!', 'Dismiss', {
-          duration: 4000,
-          horizontalPosition: 'right',
-          verticalPosition: 'top'
-        });
-
-        // Update the current user balance from response
-        const currentUser = this.authService.currentUser();
-        if (currentUser && res.balance !== undefined) {
-          this.authService.currentUser.set({
-            ...currentUser,
-            balance: res.balance
-          });
-        } else if (currentUser && res.data && res.data.balance !== undefined) {
-          // Fallback if balance is inside data object
-          this.authService.currentUser.set({
-            ...currentUser,
-            balance: res.data.balance
-          });
-        }
-
-        // Reset the input fields
-        this.tradeForm.get('shares')?.reset();
-        this.tradeForm.get('limitPrice')?.reset();
-      },
-      error: (err) => {
-        this.loadingTrade.set(false);
-        this.snackBar.open(err.error?.message || 'Error placing order.', 'Dismiss', {
-          duration: 4000,
-          horizontalPosition: 'right',
-          verticalPosition: 'top'
-        });
-      }
-    });
   }
 }

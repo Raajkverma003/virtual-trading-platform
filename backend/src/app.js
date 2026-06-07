@@ -21,6 +21,7 @@ app.use('/api/stocks', require('./routes/stockRoutes'));
 app.use('/api/trades', require('./routes/tradeRoutes'));
 app.use('/api/portfolio', require('./routes/portfolioRoutes'));
 app.use('/api/leaderboard', require('./routes/leaderboardRoutes'));
+app.use('/api/watchlist', require('./routes/watchlistRoutes'));
 
 // Root Route
 app.get('/', (req, res) => {

@@ -19,5 +19,9 @@ module.exports = {
   JWT_SECRET: process.env.JWT_SECRET,
   JWT_EXPIRE: process.env.JWT_EXPIRE || '7d',
   SIMULATION_INTERVAL: parseInt(process.env.SIMULATION_INTERVAL, 10) || 5000,
-  NODE_ENV: process.env.NODE_ENV || 'development'
+  NODE_ENV: process.env.NODE_ENV || 'development',
+  DATA_SOURCE: (process.env.DATA_SOURCE || 'SIMULATOR').replace(/^["']|["']$/g, ''),
+  ALPACA_API_KEY: (process.env.ALPACA_API_KEY || '').replace(/^["']|["']$/g, ''),
+  ALPACA_API_SECRET: (process.env.ALPACA_API_SECRET || '').replace(/^["']|["']$/g, ''),
+  ALPACA_API_URL: (process.env.ALPACA_API_URL || 'https://paper-api.alpaca.markets').replace(/^["']|["']$/g, '')
 };

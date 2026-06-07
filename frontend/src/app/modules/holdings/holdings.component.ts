@@ -9,10 +9,13 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { PortfolioService } from '../../core/services/portfolio.service';
 import { WebsocketService } from '../../core/services/websocket.service';
+import { ChartDialogComponent } from './components/chart-dialog/chart-dialog.component';
+import { TradeFormComponent } from '../dashboard/components/trade-form/trade-form.component';
 
 interface HoldingItem {
   symbol: string;
@@ -39,7 +42,9 @@ interface HoldingItem {
     MatFormFieldModule,
     MatInputModule,
     MatMenuModule,
-    MatButtonModule
+    MatButtonModule,
+    MatDialogModule,
+    TradeFormComponent
   ],
   templateUrl: './holdings.component.html',
   styleUrl: './holdings.component.css'
@@ -49,6 +54,7 @@ export class HoldingsComponent implements OnInit, OnDestroy {
   private wsService = inject(WebsocketService);
   private snackBar = inject(MatSnackBar);
   private router = inject(Router);
+  private dialog = inject(MatDialog);
 
   holdings = signal<HoldingItem[]>([]);
   loading = signal<boolean>(true);
@@ -85,15 +91,74 @@ export class HoldingsComponent implements OnInit, OnDestroy {
   });
 
   onBuyMore(symbol: string): void {
-    this.router.navigate(['/dashboard'], { queryParams: { symbol: symbol.toUpperCase(), action: 'BUY' } });
+    const holding = this.holdings().find(h => h.symbol === symbol);
+    if (!holding) return;
+
+    const prevClose = holding.currentPrice / (1 + (holding.dayChangePercent / 100));
+    const stockData = {
+      symbol: holding.symbol,
+      name: holding.name,
+      price: holding.currentPrice,
+      prevClose: Math.round(prevClose * 100) / 100,
+      change: Math.round((holding.currentPrice - prevClose) * 100) / 100,
+      changePercent: holding.dayChangePercent
+    };
+
+    const dialogRef = this.dialog.open(TradeFormComponent, {
+      data: { stock: stockData, action: 'BUY' },
+      width: '90vw',
+      maxWidth: '480px',
+      panelClass: 'trade-dialog-panel'
+    });
+
+    dialogRef.afterClosed().subscribe(success => {
+      if (success) {
+        this.fetchHoldings();
+      }
+    });
   }
 
   onSell(symbol: string): void {
-    this.router.navigate(['/dashboard'], { queryParams: { symbol: symbol.toUpperCase(), action: 'SELL' } });
+    const holding = this.holdings().find(h => h.symbol === symbol);
+    if (!holding) return;
+
+    const prevClose = holding.currentPrice / (1 + (holding.dayChangePercent / 100));
+    const stockData = {
+      symbol: holding.symbol,
+      name: holding.name,
+      price: holding.currentPrice,
+      prevClose: Math.round(prevClose * 100) / 100,
+      change: Math.round((holding.currentPrice - prevClose) * 100) / 100,
+      changePercent: holding.dayChangePercent
+    };
+
+    const dialogRef = this.dialog.open(TradeFormComponent, {
+      data: { stock: stockData, action: 'SELL' },
+      width: '90vw',
+      maxWidth: '480px',
+      panelClass: 'trade-dialog-panel'
+    });
+
+    dialogRef.afterClosed().subscribe(success => {
+      if (success) {
+        this.fetchHoldings();
+      }
+    });
   }
 
   onAnalyze(symbol: string): void {
     this.router.navigate(['/dashboard'], { queryParams: { symbol: symbol.toUpperCase() } });
+  }
+
+  onViewChart(symbol: string): void {
+    this.dialog.open(ChartDialogComponent, {
+      data: { symbol },
+      width: '90vw',
+      maxWidth: '850px',
+      height: '80vh',
+      maxHeight: '600px',
+      panelClass: 'tradingview-dialog-panel'
+    });
   }
 
   ngOnInit(): void {
