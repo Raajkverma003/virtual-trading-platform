@@ -57,6 +57,7 @@ export class HoldingsComponent implements OnInit, OnDestroy {
   private dialog = inject(MatDialog);
 
   holdings = signal<HoldingItem[]>([]);
+  cash = signal<number>(0);
   loading = signal<boolean>(true);
   searchTerm = signal<string>('');
 
@@ -76,6 +77,11 @@ export class HoldingsComponent implements OnInit, OnDestroy {
   // Overall current valuation of all active holdings in INR (formatted directly with ₹)
   overallCurrentValue = computed(() => {
     return this.holdings().reduce((sum, h) => sum + h.currentValue, 0);
+  });
+
+  // Total Account Value (cash + stock current value)
+  totalAccountValue = computed(() => {
+    return this.cash() + this.overallCurrentValue();
   });
 
   // Overall all-time profit/loss in INR
@@ -177,6 +183,7 @@ export class HoldingsComponent implements OnInit, OnDestroy {
       next: (res: any) => {
         if (res.success && res.data) {
           this.holdings.set(res.data.holdings || []);
+          this.cash.set(res.data.cash || 0);
         }
         this.loading.set(false);
       },

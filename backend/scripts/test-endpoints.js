@@ -40,9 +40,10 @@ const runTests = async () => {
 
   // Clean test data
   console.log('Cleaning test data...');
-  await User.deleteMany({ email: /test.*@example\.com/ });
-  await Transaction.deleteMany({});
-  await Stock.deleteMany({});
+  const testUsers = await User.find({ email: /(test|position).*@example\.com/ });
+  const testUserIds = testUsers.map(u => u._id);
+  await Transaction.deleteMany({ user: { $in: testUserIds } });
+  await User.deleteMany({ email: /(test|position).*@example\.com/ });
 
   // 2. Start HTTP server & simulator
   serverInstance = http.createServer(app).listen(PORT, () => {
@@ -115,8 +116,16 @@ const runTests = async () => {
     console.log('Status:', buyRes.status);
     console.log('Response message:', buyRes.data.message);
     console.log('New Balance:', buyRes.data.data.balance);
-    if (buyRes.status !== 201 || buyRes.data.data.portfolio.length === 0) {
+    if (buyRes.status !== 201) {
       throw new Error('Market BUY failed');
+    }
+
+    // Trigger daily positions settlement so the stock moves to portfolio holdings
+    console.log('\nTriggering daily positions settlement...');
+    const settleRes = await apiRequest('/api/portfolio/positions/settle', 'POST', {}, token);
+    console.log('Settlement Status:', settleRes.status);
+    if (settleRes.status !== 200) {
+      throw new Error('Settlement failed');
     }
 
     // Test 6: Verify Portfolio

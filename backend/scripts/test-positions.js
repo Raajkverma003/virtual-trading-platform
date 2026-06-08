@@ -41,9 +41,11 @@ const runTests = async () => {
 
   // Clean test data
   console.log('Cleaning test data...');
-  await User.deleteMany({ email: /test.*@example\.com/ });
-  await Transaction.deleteMany({});
-  await Position.deleteMany({});
+  const testUsers = await User.find({ email: /(test|position).*@example\.com/ });
+  const testUserIds = testUsers.map(u => u._id);
+  await Transaction.deleteMany({ user: { $in: testUserIds } });
+  await Position.deleteMany({ user: { $in: testUserIds } });
+  await User.deleteMany({ email: /(test|position).*@example\.com/ });
 
   // Seed standard stocks if empty
   const stockCount = await Stock.countDocuments();

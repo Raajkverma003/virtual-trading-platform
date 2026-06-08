@@ -1,7 +1,7 @@
 <div class="holdings-container animate-fade-in">
   <div class="holdings-header">
     <h1>Asset Holdings</h1>
-    <p class="subtitle">Track your active equities portfolio in Indian Rupees (₹)</p>
+    <p class="subtitle">Track your active equities portfolio in US Dollars ($)</p>
   </div>
 
   @if (loading()) {
@@ -11,6 +11,18 @@
   } @else {
     <!-- KPI Summary Row -->
     <div class="kpi-row">
+      <mat-card class="kpi-card glass-card" id="total-account-value-kpi">
+        <div class="kpi-content">
+          <div class="kpi-icon-wrapper bg-purple-tint">
+            <mat-icon class="kpi-icon text-purple">account_balance</mat-icon>
+          </div>
+          <div class="kpi-details">
+            <span class="kpi-lbl">Total Account Value</span>
+            <h3>${{ totalAccountValue() | number:'1.2-2' }}</h3>
+          </div>
+        </div>
+      </mat-card>
+
       <mat-card class="kpi-card glass-card" id="current-value-kpi">
         <div class="kpi-content">
           <div class="kpi-icon-wrapper bg-blue-tint">
@@ -18,7 +30,7 @@
           </div>
           <div class="kpi-details">
             <span class="kpi-lbl">Current Value</span>
-            <h3>₹{{ overallCurrentValue() | number:'1.2-2' }}</h3>
+            <h3>${{ overallCurrentValue() | number:'1.2-2' }}</h3>
           </div>
         </div>
       </mat-card>
@@ -33,7 +45,7 @@
           <div class="kpi-details">
             <span class="kpi-lbl">Overall Profit / Loss</span>
             <h3 [ngClass]="overallProfitLoss() >= 0 ? 'green-text' : 'red-text'">
-              {{ overallProfitLoss() >= 0 ? '+' : '' }}₹{{ overallProfitLoss() | number:'1.2-2' }}
+              {{ overallProfitLoss() >= 0 ? '+' : '' }}${{ overallProfitLoss() | number:'1.2-2' }}
               <span class="pnl-percent">({{ overallReturnPercent() | number:'1.2-2' }}%)</span>
             </h3>
           </div>
@@ -90,9 +102,9 @@
                     <span class="symbol-badge">{{ item.symbol }}</span>
                   </td>
                   <td class="text-right font-medium">{{ item.shares }}</td>
-                  <td class="text-right">₹{{ item.avgBuyPrice | number:'1.2-2' }}</td>
-                  <td class="text-right font-medium">₹{{ item.currentPrice | number:'1.2-2' }}</td>
-                  <td class="text-right font-bold text-slate">₹{{ item.currentValue | number:'1.2-2' }}</td>
+                  <td class="text-right">${{ item.avgBuyPrice | number:'1.2-2' }}</td>
+                  <td class="text-right font-medium">${{ item.currentPrice | number:'1.2-2' }}</td>
+                  <td class="text-right font-bold text-slate">${{ item.currentValue | number:'1.2-2' }}</td>
                   
                   <td class="text-right font-medium" [ngClass]="item.dayChangePercent >= 0 ? 'green-text' : 'red-text'">
                     {{ item.dayChangePercent >= 0 ? '+' : '' }}{{ item.dayChangePercent | number:'1.2-2' }}%
@@ -104,7 +116,7 @@
                   
                   <td class="text-right font-bold pnl-cell" [ngClass]="item.pnl >= 0 ? 'green-text' : 'red-text'">
                     <div class="pnl-content-wrapper">
-                      <span>{{ item.pnl >= 0 ? '+' : '' }}₹{{ item.pnl | number:'1.2-2' }}</span>
+                      <span>{{ item.pnl >= 0 ? '+' : '' }}${{ item.pnl | number:'1.2-2' }}</span>
                       
                       <button mat-icon-button [matMenuTriggerFor]="menu" class="action-menu-btn" (click)="$event.stopPropagation()">
                         <mat-icon>more_vert</mat-icon>
