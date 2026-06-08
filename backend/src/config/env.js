@@ -23,5 +23,5 @@ module.exports = {
   DATA_SOURCE: (process.env.DATA_SOURCE || 'SIMULATOR').replace(/^["']|["']$/g, ''),
   ALPACA_API_KEY: (process.env.ALPACA_API_KEY || '').replace(/^["']|["']$/g, ''),
   ALPACA_API_SECRET: (process.env.ALPACA_API_SECRET || '').replace(/^["']|["']$/g, ''),
-  ALPACA_API_URL: (process.env.ALPACA_API_URL || 'https://paper-api.alpaca.markets').replace(/^["']|["']$/g, '')
+  ALPACA_API_URL: (process.env.ALPACA_API_URL || 'https://paper-api.alpaca.markets').replace(/^["']|["']$/g, '').replace(/\/v2\/?$/, '')
 };

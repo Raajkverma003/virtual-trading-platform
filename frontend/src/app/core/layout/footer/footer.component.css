@@ -1,0 +1,347 @@
+.kite-footer {
+  margin-top: 40px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 32px 40px 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.025);
+  font-family: 'Inter', sans-serif;
+  color: #4a5568;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 2fr 1.5fr;
+  gap: 48px;
+  margin-bottom: 32px;
+}
+
+@media (max-width: 1024px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .kite-footer {
+    padding: 24px 20px 16px;
+  }
+}
+
+/* Founder column */
+.footer-logo {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1a202c;
+  margin-bottom: 12px;
+  letter-spacing: 0.5px;
+}
+
+.brand-accent {
+  color: #ff5722;
+}
+
+.founder-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ff5722;
+  margin: 0 0 12px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.founder-bio {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #718096;
+  margin-bottom: 20px;
+}
+
+.social-links {
+  display: flex;
+  gap: 12px;
+}
+
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: #f7fafc;
+  border: 1px solid #e2e8f0;
+  color: #718096;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.social-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+/* Hover effects with brand specific colors */
+.social-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.social-btn.linkedin:hover {
+  color: #ffffff;
+  background-color: #0077b5;
+  border-color: #0077b5;
+}
+
+.social-btn.facebook:hover {
+  color: #ffffff;
+  background-color: #1877f2;
+  border-color: #1877f2;
+}
+
+.social-btn.twitter:hover {
+  color: #ffffff;
+  background-color: #1da1f2;
+  border-color: #1da1f2;
+}
+
+.social-btn.instagram:hover {
+  color: #ffffff;
+  background-color: #e1306c;
+  border-color: #e1306c;
+}
+
+.social-btn.github:hover {
+  color: #ffffff;
+  background-color: #24292e;
+  border-color: #24292e;
+}
+
+/* Contact info layout alignment */
+.founder-contact {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #718096;
+}
+
+.contact-item mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: #ff5722;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.contact-item a {
+  color: #4a5568;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.contact-item a:hover {
+  color: #ff5722;
+}
+
+
+/* About me column */
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2d3748;
+  margin-top: 0;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.section-title::after {
+  content: '';
+  display: block;
+  width: 30px;
+  height: 2px;
+  background-color: #ff5722;
+  margin-top: 6px;
+  border-radius: 2px;
+}
+
+.skills-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.skill-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: #4a5568;
+  background-color: #edf2f7;
+  padding: 4px 10px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.skill-tag:hover {
+  background-color: #ff5722;
+  color: #ffffff;
+}
+
+/* Freelance Column */
+.freelance-card {
+  background: linear-gradient(135deg, #fffaf9 0%, #fff3f0 100%);
+  border: 1px solid #ffdcd3;
+  border-radius: 12px;
+  padding: 20px;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+.freelance-card::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 87, 34, 0.05);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.freelance-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #2e7d32;
+  background-color: #e8f5e9;
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+  align-self: flex-start;
+}
+
+.pulse-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #2e7d32;
+  border-radius: 50%;
+  animation: pulse-ring 1.5s infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(46, 125, 50, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(46, 125, 50, 0);
+  }
+}
+
+.freelance-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #4a5568;
+  margin: 0 0 16px 0;
+}
+
+.hire-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #ff5722;
+  color: #ffffff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(255, 87, 34, 0.2);
+}
+
+.hire-btn:hover {
+  background-color: #e64a19;
+  box-shadow: 0 4px 8px rgba(255, 87, 34, 0.3);
+  transform: translateY(-1px);
+}
+
+.hire-btn mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+/* Footer bottom row */
+.footer-divider {
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+  margin: 24px 0;
+}
+
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #a0aec0;
+}
+
+@media (max-width: 640px) {
+  .footer-bottom {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+}
+
+.copyright {
+  margin: 0;
+}
+
+.footer-links {
+  display: flex;
+  gap: 20px;
+}
+
+.footer-links a {
+  color: #a0aec0;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: #ff5722;
+}

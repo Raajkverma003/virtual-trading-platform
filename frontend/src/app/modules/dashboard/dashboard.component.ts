@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { StockMetricsWidgetComponent } from './components/stock-metrics-widget/stock-metrics-widget.component';
@@ -40,7 +40,7 @@ interface StockData {
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
-export class DashboardComponent implements OnInit, OnDestroy {
+export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   private stockService = inject(StockService);
   private snackBar = inject(MatSnackBar);
   
@@ -73,6 +73,80 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.fetchStocks();
     this.subscribeToSocketPrices();
     this.fetchMostBought();
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      this.loadTradingViewScript();
+    }, 100);
+  }
+
+  private loadTradingViewScript(): void {
+    if (typeof (window as any).TradingView !== 'undefined') {
+      this.initWidgets();
+      return;
+    }
+
+    if (document.getElementById('tradingview-widget-script')) {
+      const interval = setInterval(() => {
+        if (typeof (window as any).TradingView !== 'undefined') {
+          clearInterval(interval);
+          this.initWidgets();
+        }
+      }, 100);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.id = 'tradingview-widget-script';
+    script.type = 'text/javascript';
+    script.src = 'https://s3.tradingview.com/tv.js';
+    script.onload = () => {
+      this.initWidgets();
+    };
+    script.onerror = () => {
+      console.error('Error loading TradingView script.');
+    };
+    document.head.appendChild(script);
+  }
+
+  private initWidgets(): void {
+    const TV = (window as any).TradingView;
+    if (typeof TV === 'undefined') return;
+
+    try {
+      new TV.widget({
+        autosize: true,
+        symbol: 'NASDAQ:QQQ',
+        interval: 'D',
+        timezone: 'Etc/UTC',
+        theme: 'light',
+        style: '3', // Area Chart
+        locale: 'en',
+        enable_publishing: false,
+        hide_top_toolbar: true,
+        hide_legend: true,
+        save_image: false,
+        container_id: 'tradingview_nasdaq'
+      });
+
+      new TV.widget({
+        autosize: true,
+        symbol: 'AMEX:SPY',
+        interval: 'D',
+        timezone: 'Etc/UTC',
+        theme: 'light',
+        style: '3', // Area Chart
+        locale: 'en',
+        enable_publishing: false,
+        hide_top_toolbar: true,
+        hide_legend: true,
+        save_image: false,
+        container_id: 'tradingview_sp500'
+      });
+    } catch (e) {
+      console.error('Error rendering TradingView widgets on dashboard:', e);
+    }
   }
 
   ngOnDestroy(): void {

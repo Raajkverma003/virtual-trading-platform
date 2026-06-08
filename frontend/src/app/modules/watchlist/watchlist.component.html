@@ -100,48 +100,56 @@
             </button>
           </div>
 
-          <!-- Add Symbol Search Box with custom autocomplete suggestion panel -->
+          <!-- Add Symbol Search Box with live Alpaca autocomplete -->
           <div class="search-box-container">
             <div class="search-input-wrapper">
               <mat-icon class="search-icon">search</mat-icon>
               <input 
                 type="text" 
-                placeholder="Search symbol or company name to add... (e.g. AAPL, NVDA)" 
+                placeholder="Search any stock symbol or company... (e.g. AAPL, COIN, TSLA)" 
                 [ngModel]="searchTerm()"
-                (ngModelChange)="searchTerm.set($event)"
+                (ngModelChange)="onSearchInput($event)"
                 (focus)="showSearchSuggestions.set(true)"
                 (blur)="showSearchSuggestions.set(false)"
                 class="stock-search-input"
                 [disabled]="wl.symbols.length >= 50"
               />
               @if (searchTerm()) {
-                <button type="button" class="clear-search-btn" (click)="searchTerm.set('')">
+                <button type="button" class="clear-search-btn" (mousedown)="$event.preventDefault()" (click)="onSearchInput('')">
                   <mat-icon>close</mat-icon>
                 </button>
               }
             </div>
 
-            <!-- Suggestion Panel (prevent blur from closing before click is registered by using mousedown) -->
-            @if (showSearchSuggestions() && filteredSearchStocks().length > 0) {
+            <!-- Suggestion Panel -->
+            @if (showSearchSuggestions() && searchTerm().trim().length > 0) {
               <div class="suggestions-overlay glass-card" (mousedown)="$event.preventDefault()">
-                @for (stock of filteredSearchStocks(); track stock.symbol) {
-                  <div class="suggestion-item" (click)="onAddSymbol(stock.symbol)">
-                    <div class="stock-details">
-                      <span class="suggest-symbol">{{ stock.symbol }}</span>
-                      <span class="suggest-name">{{ stock.name }}</span>
+                <!-- Loading state -->
+                @if (searchLoading()) {
+                  <div class="search-loading-state">
+                    <mat-spinner diameter="24"></mat-spinner>
+                    <span>Searching Alpaca assets...</span>
+                  </div>
+                } @else if (filteredSearchResults.length > 0) {
+                  @for (stock of filteredSearchResults; track stock.symbol) {
+                    <div class="suggestion-item" (click)="onAddSymbol(stock.symbol)">
+                      <div class="stock-details">
+                        <span class="suggest-symbol">{{ stock.symbol }}</span>
+                        <span class="suggest-name">{{ stock.name }}</span>
+                      </div>
+                      <div class="suggest-action">
+                        <button mat-icon-button class="add-symbol-btn">
+                          <mat-icon>add_circle_outline</mat-icon>
+                        </button>
+                      </div>
                     </div>
-                    <div class="suggest-action">
-                      <span class="suggest-price">{{ stock.price | currency:'USD':'symbol':'1.2-2' }}</span>
-                      <button mat-icon-button class="add-symbol-btn">
-                        <mat-icon>add_circle_outline</mat-icon>
-                      </button>
-                    </div>
+                  }
+                } @else {
+                  <div class="no-results">
+                    <mat-icon class="no-results-icon">search_off</mat-icon>
+                    <span>No matching symbols found for "{{ searchTerm() }}"</span>
                   </div>
                 }
-              </div>
-            } @else if (showSearchSuggestions() && searchTerm().trim().length > 0) {
-              <div class="suggestions-overlay glass-card no-results" (mousedown)="$event.preventDefault()">
-                No matching, untracked symbols found.
               </div>
             }
           </div>
@@ -226,7 +234,9 @@
         } @else {
           <!-- Empty Watchlist state -->
           <div class="empty-watchlist-card glass-card">
-            <mat-icon class="empty-icon">star_outline</mat-icon>
+            <div class="empty-icon-wrapper">
+              <mat-icon class="empty-icon">star_outline</mat-icon>
+            </div>
             <h3>Watchlist is Empty</h3>
             <p>Search and add stock symbols using the search bar above to monitor live prices, changes, and place virtual orders.</p>
           </div>
@@ -236,7 +246,9 @@
     } @else {
       <!-- Empty Watchlist lists state -->
       <div class="no-watchlists-card glass-card">
-        <mat-icon class="empty-icon">visibility_off</mat-icon>
+        <div class="empty-icon-wrapper">
+          <mat-icon class="empty-icon">visibility_off</mat-icon>
+        </div>
         <h3>No Watchlists Created</h3>
         <p>You have not created any watchlists yet. Start by typing a name above and clicking "Create Watchlist" (up to 5 lists allowed).</p>
       </div>

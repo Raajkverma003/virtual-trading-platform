@@ -110,16 +110,38 @@ const runAlpacaSyncInterval = () => {
       // to guarantee we have live price values and daily prevClose values even if the WebSocket is quiet
       if (tickCount % 12 === 1 && alpacaInstance) {
         try {
-          const symbols = SEED_STOCKS.map(s => s.symbol);
-          const snapshots = await alpacaInstance.getSnapshots(symbols);
-          if (Array.isArray(snapshots)) {
-            for (const snap of snapshots) {
-              const sym = snap.symbol;
-              if (snap.LatestTrade && snap.LatestTrade.Price) {
-                livePricesCache[sym] = snap.LatestTrade.Price;
-                if (snap.PrevDailyBar && snap.PrevDailyBar.ClosePrice) {
-                  livePrevCloseCache[sym] = snap.PrevDailyBar.ClosePrice;
+          // Dynamically fetch all symbols from the database (includes user-added ones)
+          const allDbStocks = await Stock.find().select('symbol');
+          const symbols = allDbStocks.map(s => s.symbol);
+          
+          if (symbols.length > 0) {
+            // Alpaca getSnapshots has a limit; batch in groups of 50
+            for (let i = 0; i < symbols.length; i += 50) {
+              const batch = symbols.slice(i, i + 50);
+              try {
+                const snapshots = await alpacaInstance.getSnapshots(batch);
+                if (Array.isArray(snapshots)) {
+                  for (const snap of snapshots) {
+                    const sym = snap.symbol;
+                    if (snap.LatestTrade && snap.LatestTrade.Price) {
+                      livePricesCache[sym] = snap.LatestTrade.Price;
+                      if (snap.PrevDailyBar && snap.PrevDailyBar.ClosePrice) {
+                        livePrevCloseCache[sym] = snap.PrevDailyBar.ClosePrice;
+                      }
+                    }
+                  }
                 }
+              } catch (batchErr) {
+                console.warn(`[Alpaca Feed] Snapshot batch failed for ${batch.join(',')}: ${batchErr.message}`);
+              }
+            }
+
+            // Dynamically subscribe to trades for any new symbols
+            if (alpacaClient) {
+              try {
+                alpacaClient.subscribeForTrades(symbols);
+              } catch (subErr) {
+                // Non-critical: subscription may already exist
               }
             }
           }
@@ -229,6 +251,22 @@ const startStockSimulation = async () => {
       }
 
       alpacaClient = alpacaInstance.data_stream_v2;
+
+      // Monkey-patch ping to prevent readyState crashes when socket is reconnecting
+      if (alpacaClient && typeof alpacaClient.ping === 'function') {
+        const originalPing = alpacaClient.ping;
+        alpacaClient.ping = function () {
+          try {
+            if (this.conn && this.conn.readyState === 1) { // 1 is OPEN
+              originalPing.call(this);
+            } else {
+              console.warn(`[Alpaca Feed] WebSocket readyState is ${this.conn ? this.conn.readyState : 'unknown'} (not open), skipping ping.`);
+            }
+          } catch (pingErr) {
+            console.warn('[Alpaca Feed] Caught ping exception:', pingErr.message);
+          }
+        };
+      }
 
       alpacaClient.onConnect(() => {
         console.log('[Alpaca Feed] Connected to live data stream');

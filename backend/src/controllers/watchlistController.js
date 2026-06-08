@@ -142,11 +142,71 @@ const addSymbolToWatchlist = async (req, res, next) => {
 
     const uppercaseSymbol = symbol.trim().toUpperCase();
 
-    // Verify symbol exists in the platform database
-    const stockExists = await Stock.findOne({ symbol: uppercaseSymbol });
+    // Verify symbol exists in the platform database OR is a valid Alpaca asset
+    let stockExists = await Stock.findOne({ symbol: uppercaseSymbol });
     if (!stockExists) {
-      res.status(404);
-      throw new Error(`Symbol ${uppercaseSymbol} is not supported on this platform`);
+      // Try to find and create from Alpaca
+      try {
+        const { ALPACA_API_KEY, ALPACA_API_SECRET } = require('../config/env');
+        if (ALPACA_API_KEY && ALPACA_API_SECRET) {
+          const Alpaca = require('@alpacahq/alpaca-trade-api');
+          const alpaca = new Alpaca({
+            keyId: ALPACA_API_KEY,
+            secretKey: ALPACA_API_SECRET,
+            paper: true
+          });
+
+          // Verify the asset exists on Alpaca
+          const asset = await alpaca.getAsset(uppercaseSymbol);
+          if (!asset || !asset.tradable) {
+            res.status(404);
+            throw new Error(`Symbol ${uppercaseSymbol} is not tradeable on Alpaca`);
+          }
+
+          // Fetch snapshot for current price data
+          let price = 100; // fallback
+          let prevClose = 100;
+          try {
+            const snapshots = await alpaca.getSnapshots([uppercaseSymbol]);
+            if (Array.isArray(snapshots) && snapshots.length > 0) {
+              const snap = snapshots[0];
+              if (snap.LatestTrade && snap.LatestTrade.Price) {
+                price = snap.LatestTrade.Price;
+              }
+              if (snap.PrevDailyBar && snap.PrevDailyBar.ClosePrice) {
+                prevClose = snap.PrevDailyBar.ClosePrice;
+              } else {
+                prevClose = price;
+              }
+            }
+          } catch (snapErr) {
+            console.warn(`[Watchlist] Could not fetch snapshot for ${uppercaseSymbol}:`, snapErr.message);
+            prevClose = price;
+          }
+
+          const change = Math.round((price - prevClose) * 100) / 100;
+          const changePercent = prevClose > 0 ? Math.round((change / prevClose) * 10000) / 100 : 0;
+
+          stockExists = await Stock.create({
+            symbol: uppercaseSymbol,
+            name: asset.name || uppercaseSymbol,
+            price,
+            prevClose,
+            change,
+            changePercent,
+            history: [{ timestamp: new Date(), price }]
+          });
+
+          console.log(`[Watchlist] Auto-created stock ${uppercaseSymbol} (${asset.name}) at $${price}`);
+        } else {
+          res.status(404);
+          throw new Error(`Symbol ${uppercaseSymbol} is not supported on this platform`);
+        }
+      } catch (alpacaErr) {
+        if (res.statusCode === 404) throw alpacaErr;
+        res.status(404);
+        throw new Error(`Symbol ${uppercaseSymbol} is not available. ${alpacaErr.message}`);
+      }
     }
 
     const watchlist = await Watchlist.findOne({ _id: req.params.id, user: req.user._id });

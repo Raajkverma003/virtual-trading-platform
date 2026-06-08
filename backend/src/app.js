@@ -22,6 +22,7 @@ app.use('/api/trades', require('./routes/tradeRoutes'));
 app.use('/api/portfolio', require('./routes/portfolioRoutes'));
 app.use('/api/leaderboard', require('./routes/leaderboardRoutes'));
 app.use('/api/watchlist', require('./routes/watchlistRoutes'));
+app.use('/api/alpaca', require('./routes/alpacaRoutes'));
 
 // Root Route
 app.get('/', (req, res) => {

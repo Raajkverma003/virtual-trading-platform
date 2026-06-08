@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -7,9 +7,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription, switchMap, debounceTime, distinctUntilChanged, of, tap, catchError } from 'rxjs';
 import { WatchlistService } from '../../core/services/watchlist.service';
-import { StockService } from '../../core/services/stock.service';
+import { AlpacaService } from '../../core/services/alpaca.service';
 import { WebsocketService } from '../../core/services/websocket.service';
 import { TradeFormComponent } from '../dashboard/components/trade-form/trade-form.component';
 
@@ -30,6 +30,11 @@ interface Watchlist {
   populatedSymbols: PopulatedSymbol[];
 }
 
+interface SearchResult {
+  symbol: string;
+  name: string;
+}
+
 @Component({
   selector: 'app-watchlist',
   standalone: true,
@@ -48,14 +53,13 @@ interface Watchlist {
 })
 export class WatchlistComponent implements OnInit, OnDestroy {
   private watchlistService = inject(WatchlistService);
-  private stockService = inject(StockService);
+  private alpacaService = inject(AlpacaService);
   private wsService = inject(WebsocketService);
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
 
   watchlists = signal<Watchlist[]>([]);
   selectedWatchlist = signal<Watchlist | null>(null);
-  allStocks = signal<any[]>([]);
   loading = signal<boolean>(true);
   
   // Watchlist creation input
@@ -65,44 +69,70 @@ export class WatchlistComponent implements OnInit, OnDestroy {
   // Symbol search inside active watchlist
   searchTerm = signal<string>('');
   showSearchSuggestions = signal<boolean>(false);
+  searchResults = signal<SearchResult[]>([]);
+  searchLoading = signal<boolean>(false);
 
+  // Debounced search subject
+  private searchSubject = new Subject<string>();
+  private searchSub!: Subscription;
   private priceSub!: Subscription;
 
-  // Filtered stocks that can be added to the current watchlist
-  filteredSearchStocks = computed(() => {
-    const query = this.searchTerm().trim().toUpperCase();
-    if (!query) return [];
-    
+  // Filtered results excluding already-added symbols
+  get filteredSearchResults(): SearchResult[] {
     const activeWl = this.selectedWatchlist();
     const currentSymbols = activeWl ? activeWl.symbols : [];
-    
-    return this.allStocks().filter(s =>
-      (s.symbol.toUpperCase().includes(query) || s.name.toUpperCase().includes(query)) &&
-      !currentSymbols.includes(s.symbol)
-    );
-  });
+    return this.searchResults().filter(s => !currentSymbols.includes(s.symbol));
+  }
 
   ngOnInit(): void {
-    this.fetchStocks();
     this.fetchWatchlists();
     this.subscribeToSocketPrices();
+    this.setupSearch();
   }
 
   ngOnDestroy(): void {
     if (this.priceSub) {
       this.priceSub.unsubscribe();
     }
+    if (this.searchSub) {
+      this.searchSub.unsubscribe();
+    }
   }
 
-  private fetchStocks(): void {
-    this.stockService.getStocks().subscribe({
-      next: (res: any) => {
-        this.allStocks.set(res.data || []);
-      },
-      error: () => {
-        console.error('Error fetching system stocks');
-      }
+  private setupSearch(): void {
+    this.searchSub = this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      tap(query => {
+        if (query.trim().length > 0) {
+          this.searchLoading.set(true);
+        }
+      }),
+      switchMap(query => {
+        const trimmed = query.trim();
+        if (trimmed.length === 0) {
+          this.searchLoading.set(false);
+          return of({ data: [] });
+        }
+        return this.alpacaService.searchSymbols(trimmed).pipe(
+          catchError(() => {
+            this.searchLoading.set(false);
+            return of({ data: [] });
+          })
+        );
+      })
+    ).subscribe((res: any) => {
+      this.searchResults.set(res.data || []);
+      this.searchLoading.set(false);
     });
+  }
+
+  onSearchInput(value: string): void {
+    this.searchTerm.set(value);
+    this.searchSubject.next(value);
+    if (value.trim().length === 0) {
+      this.searchResults.set([]);
+    }
   }
 
   fetchWatchlists(selectId?: string): void {
@@ -132,6 +162,7 @@ export class WatchlistComponent implements OnInit, OnDestroy {
   selectWatchlist(wl: Watchlist): void {
     this.selectedWatchlist.set(wl);
     this.searchTerm.set('');
+    this.searchResults.set([]);
     this.showSearchSuggestions.set(false);
   }
 
@@ -184,6 +215,7 @@ export class WatchlistComponent implements OnInit, OnDestroy {
       next: (res: any) => {
         this.snackBar.open(`${symbol} added to watchlist.`, 'Dismiss', { duration: 2000 });
         this.searchTerm.set('');
+        this.searchResults.set([]);
         this.showSearchSuggestions.set(false);
         
         const updated = res.data;

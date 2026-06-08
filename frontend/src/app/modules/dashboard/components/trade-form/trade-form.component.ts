@@ -67,9 +67,6 @@ export class TradeFormComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['stock'] && !changes['stock'].isFirstChange()) {
-      this.resetForm();
-    }
     if (changes['initialAction']) {
       this.tradeType.set(this.initialAction);
     }

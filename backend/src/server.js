@@ -40,3 +40,13 @@ process.on('unhandledRejection', (err, promise) => {
   console.error(`Unhandled Rejection Error: ${err.message}`);
   handleExit();
 });
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error(`Uncaught Exception Error: ${err.message}`, err.stack);
+  if (err.message && err.message.includes('WebSocket is not open')) {
+    console.warn('[Alpaca Feed] WebSocket exception caught globally. Ignoring to let SDK auto-reconnect.');
+    return;
+  }
+  handleExit();
+});

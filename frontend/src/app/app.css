@@ -17,7 +17,14 @@
   overflow-y: auto;
   background-color: #f6f8fa;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
+
+.router-container {
+  flex: 1 0 auto;
+}
+
 
 .auth-layout {
   height: 100vh;

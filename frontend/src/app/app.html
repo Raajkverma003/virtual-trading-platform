@@ -4,7 +4,10 @@
     <div class="layout-body">
       <app-sidebar></app-sidebar>
       <main class="layout-content">
-        <router-outlet></router-outlet>
+        <div class="router-container">
+          <router-outlet></router-outlet>
+        </div>
+        <app-footer></app-footer>
       </main>
     </div>
   </div>
@@ -13,3 +16,4 @@
     <router-outlet></router-outlet>
   </div>
 }
+

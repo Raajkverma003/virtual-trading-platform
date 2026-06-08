@@ -1,8 +1,50 @@
 <mat-toolbar class="kite-header">
   <div class="header-left">
     <span class="logo-text" routerLink="/dashboard">
-      <span class="brand-blue">V-</span>Kite
+      <span class="brand-blue">V-</span>Trade
     </span>
+  </div>
+
+  <div class="header-center" *ngIf="authService.currentUser()">
+    <!-- NASDAQ -->
+    <div class="index-widget" title="NASDAQ 100 Index">
+      <div class="index-meta">
+        <span class="index-name">NASDAQ</span>
+        <span class="index-value">{{ nasdaqPrice | number:'1.2-2' }}</span>
+      </div>
+      <span class="index-change" [class.positive]="nasdaqChange >= 0" [class.negative]="nasdaqChange < 0">
+        {{ nasdaqChange >= 0 ? '+' : '' }}{{ nasdaqChange | number:'1.2-2' }} ({{ nasdaqChange >= 0 ? '+' : '' }}{{ nasdaqPercent | number:'1.2-2' }}%)
+      </span>
+    </div>
+
+    <!-- S&P 500 -->
+    <div class="index-widget" title="S&P 500 Index">
+      <div class="index-meta">
+        <span class="index-name">S&P 500</span>
+        <span class="index-value">{{ sp500Price | number:'1.2-2' }}</span>
+      </div>
+      <span class="index-change" [class.positive]="sp500Change >= 0" [class.negative]="sp500Change < 0">
+        {{ sp500Change >= 0 ? '+' : '' }}{{ sp500Change | number:'1.2-2' }} ({{ sp500Change >= 0 ? '+' : '' }}{{ sp500Percent | number:'1.2-2' }}%)
+      </span>
+    </div>
+
+    <!-- Dow Jones -->
+    <div class="index-widget" title="Dow Jones Industrial Average">
+      <div class="index-meta">
+        <span class="index-name">DOW 30</span>
+        <span class="index-value">{{ dowPrice | number:'1.2-2' }}</span>
+      </div>
+      <span class="index-change" [class.positive]="dowChange >= 0" [class.negative]="dowChange < 0">
+        {{ dowChange >= 0 ? '+' : '' }}{{ dowChange | number:'1.2-2' }} ({{ dowChange >= 0 ? '+' : '' }}{{ dowPercent | number:'1.2-2' }}%)
+      </span>
+    </div>
+
+    <!-- Market Timings -->
+    <div class="market-timings-widget" [title]="marketStatus.isOpen ? 'US Stock Market is currently Open' : 'US Stock Market is currently Closed'">
+      <span class="market-indicator" [class.open]="marketStatus.isOpen"></span>
+      <span class="market-status-text">{{ marketStatus.status }}</span>
+      <span class="market-time-countdown">({{ marketStatus.timeString }})</span>
+    </div>
   </div>
 
   <div class="header-right" *ngIf="authService.currentUser()">

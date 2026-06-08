@@ -1,96 +1,27 @@
 <div class="dashboard-wrapper animate-fade-in">
-  <div class="dashboard-grid">
-  <!-- Left side: Market Watchlist -->
-  <div class="watchlist-section">
-    <div class="section-header">
-      <h2>Market Watchlist</h2>
-      <span class="live-indicator">
-        <span class="pulse-dot"></span> Real-time
-      </span>
-    </div>
-
-    @if (loadingStocks()) {
-      <div class="spinner-container">
-        <mat-spinner diameter="40"></mat-spinner>
+  <!-- Top Section: NASDAQ and S&P 500 Index Charts -->
+  <div class="indices-charts-row">
+    <mat-card class="index-card glass-card">
+      <div class="index-header">
+        <span class="index-title">NASDAQ 100 (QQQ)</span>
+        <span class="index-symbol">QQQ</span>
       </div>
-    } @else {
-      <div class="ticker-list">
-        @for (stock of stocks(); track stock.symbol) {
-          <div 
-            class="ticker-card"
-            [class.selected]="selectedStock()?.symbol === stock.symbol"
-            [class.flash-up]="stock.flashState === 'up'"
-            [class.flash-down]="stock.flashState === 'down'"
-            (click)="selectStock(stock)"
-          >
-            <div class="ticker-info">
-              <span class="symbol">{{ stock.symbol }}</span>
-              <span class="company-name">{{ stock.name }}</span>
-            </div>
-            <div class="price-info">
-              <span class="price">{{ stock.price | currency:'USD':'symbol':'1.2-2' }}</span>
-              <span class="change" [ngClass]="stock.change >= 0 ? 'green-text' : 'red-text'">
-                <mat-icon class="mini-arrow">{{ stock.change >= 0 ? 'arrow_drop_up' : 'arrow_drop_down' }}</mat-icon>
-                {{ stock.changePercent | number:'1.2-2' }}%
-              </span>
-            </div>
-          </div>
-        }
+      <div class="index-chart-container">
+        <div id="tradingview_nasdaq" class="tradingview-widget-container"></div>
       </div>
-    }
+    </mat-card>
+    <mat-card class="index-card glass-card">
+      <div class="index-header">
+        <span class="index-title">S&P 500 (SPY)</span>
+        <span class="index-symbol">SPY</span>
+      </div>
+      <div class="index-chart-container">
+        <div id="tradingview_sp500" class="tradingview-widget-container"></div>
+      </div>
+    </mat-card>
   </div>
 
-  <!-- Right side: Trading Desk -->
-  <div class="trading-desk-section">
-    @if (selectedStock(); as stock) {
-      <mat-card class="trading-card glass-card">
-        <mat-card-header>
-          <div class="title-row">
-            <div class="stock-title-info">
-              <mat-card-title>{{ stock.symbol }}</mat-card-title>
-              <mat-card-subtitle>{{ stock.name }}</mat-card-subtitle>
-            </div>
-            <div class="stock-current-price">
-              <h3>{{ stock.price | currency:'USD':'symbol':'1.2-2' }}</h3>
-              <span [ngClass]="stock.change >= 0 ? 'green-text' : 'red-text'" class="price-change-row">
-                {{ stock.change >= 0 ? '+' : '' }}{{ stock.change | currency:'USD':'symbol':'1.2-2' }} ({{ stock.changePercent | number:'1.2-2' }}%)
-              </span>
-            </div>
-          </div>
-        </mat-card-header>
-
-        <mat-card-content class="desk-content">
-          <!-- Fast Stats -->
-          <div class="stats-row">
-            <div class="stat-box">
-              <span class="stat-lbl">Previous Close</span>
-              <span class="stat-val">{{ stock.prevClose | currency:'USD':'symbol':'1.2-2' }}</span>
-            </div>
-            <div class="stat-box">
-              <span class="stat-lbl">Day High (Sim)</span>
-              <span class="stat-val">{{ (stock.price * 1.02) | currency:'USD':'symbol':'1.2-2' }}</span>
-            </div>
-            <div class="stat-box">
-              <span class="stat-lbl">Day Low (Sim)</span>
-              <span class="stat-val">{{ (stock.price * 0.98) | currency:'USD':'symbol':'1.2-2' }}</span>
-            </div>
-          </div>
-
-          <!-- Reusable Order Box Component -->
-          <app-trade-form [stock]="selectedStock()" [initialAction]="tradeType()"></app-trade-form>
-        </mat-card-content>
-      </mat-card>
-    } @else {
-      <div class="placeholder-card glass-card">
-        <mat-icon class="desk-placeholder-icon">query_stats</mat-icon>
-        <h3>No Stock Selected</h3>
-        <p>Select a stock ticker from the watchlist on the left to review metrics and place buy or sell orders.</p>
-      </div>
-    }
-  </div>
-  </div> <!-- dashboard-grid end -->
-
-  <!-- Market Activity widgets row -->
+  <!-- Middle Section: Market Activity Widgets -->
   <div class="market-widgets-section">
     <app-stock-metrics-widget 
       title="Top Gainers" 
@@ -113,4 +44,104 @@
       (stockSelected)="selectFromWidget($event)"
     ></app-stock-metrics-widget>
   </div>
+
+  <!-- Bottom Section: Watchlist and Trading Desk -->
+  <div class="dashboard-grid">
+    <!-- Left side: Market Watchlist -->
+    <div class="watchlist-section">
+      <div class="section-header">
+        <h2>Market Watchlist</h2>
+        <span class="live-indicator">
+          <span class="pulse-dot"></span> Real-time
+        </span>
+      </div>
+
+      @if (loadingStocks()) {
+        <div class="spinner-container">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      } @else {
+        <div class="ticker-list">
+          @for (stock of stocks(); track stock.symbol) {
+            <div 
+              class="ticker-card"
+              [class.selected]="selectedStock()?.symbol === stock.symbol"
+              [class.flash-up]="stock.flashState === 'up'"
+              [class.flash-down]="stock.flashState === 'down'"
+              (click)="selectStock(stock)"
+            >
+              <div class="ticker-info">
+                <span class="symbol">{{ stock.symbol }}</span>
+                <span class="company-name">{{ stock.name }}</span>
+              </div>
+              <div class="price-info">
+                <span class="price">{{ stock.price | currency:'USD':'symbol':'1.2-2' }}</span>
+                <span class="change" [ngClass]="stock.change >= 0 ? 'green-text' : 'red-text'">
+                  <mat-icon class="mini-arrow">{{ stock.change >= 0 ? 'arrow_drop_up' : 'arrow_drop_down' }}</mat-icon>
+                  {{ stock.changePercent | number:'1.2-2' }}%
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Right side: Trading Desk -->
+    <div class="trading-desk-section">
+      @if (selectedStock(); as stock) {
+        <mat-card class="trading-card glass-card">
+          <mat-card-header>
+            <div class="title-row">
+              <div class="stock-title-info">
+                <mat-card-title>{{ stock.symbol }}</mat-card-title>
+                <mat-card-subtitle>{{ stock.name }}</mat-card-subtitle>
+              </div>
+              <div class="stock-current-price">
+                <h3>{{ stock.price | currency:'USD':'symbol':'1.2-2' }}</h3>
+                <span [ngClass]="stock.change >= 0 ? 'green-text' : 'red-text'" class="price-change-row">
+                  {{ stock.change >= 0 ? '+' : '' }}{{ stock.change | currency:'USD':'symbol':'1.2-2' }} ({{ stock.changePercent | number:'1.2-2' }}%)
+                </span>
+              </div>
+            </div>
+          </mat-card-header>
+
+          <mat-card-content class="desk-content">
+            <!-- Fast Stats with new 52-Week High and Low Cards -->
+            <div class="stats-row">
+              <div class="stat-box">
+                <span class="stat-lbl">Previous Close</span>
+                <span class="stat-val">{{ stock.prevClose | currency:'USD':'symbol':'1.2-2' }}</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-lbl">Day High (Sim)</span>
+                <span class="stat-val">{{ (stock.price * 1.02) | currency:'USD':'symbol':'1.2-2' }}</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-lbl">Day Low (Sim)</span>
+                <span class="stat-val">{{ (stock.price * 0.98) | currency:'USD':'symbol':'1.2-2' }}</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-lbl">52-Week High (Sim)</span>
+                <span class="stat-val">{{ (stock.price * 1.35) | currency:'USD':'symbol':'1.2-2' }}</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-lbl">52-Week Low (Sim)</span>
+                <span class="stat-val">{{ (stock.price * 0.72) | currency:'USD':'symbol':'1.2-2' }}</span>
+              </div>
+            </div>
+
+            <!-- Reusable Order Box Component -->
+            <app-trade-form [stock]="selectedStock()" [initialAction]="tradeType()"></app-trade-form>
+          </mat-card-content>
+        </mat-card>
+      } @else {
+        <div class="placeholder-card glass-card">
+          <mat-icon class="desk-placeholder-icon">query_stats</mat-icon>
+          <h3>No Stock Selected</h3>
+          <p>Select a stock ticker from the watchlist on the left to review metrics and place buy or sell orders.</p>
+        </div>
+      }
+    </div>
+  </div> <!-- dashboard-grid end -->
 </div> <!-- dashboard-wrapper end -->
