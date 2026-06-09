@@ -150,3 +150,33 @@
     }
   }
 </div>
+
+<!-- Beautiful custom confirm modal for daily settlement -->
+@if (showConfirmSettle()) {
+  <div class="confirm-modal-backdrop animate-fade-in" (click)="onCancelSettle()">
+    <div class="confirm-modal-content glass-card animate-scale-up" (click)="$event.stopPropagation()">
+      <div class="confirm-modal-header">
+        <mat-icon class="warning-icon">warning_amber</mat-icon>
+        <h2>Confirm Daily Settlement</h2>
+      </div>
+      <div class="confirm-modal-body">
+        <p>Are you sure you want to trigger daily settlement?</p>
+        <p class="modal-detail">
+          <strong>STOCK</strong> long positions will merge into your settled holdings.<br>
+          Other active positions (shorts, options, futures) will be cash-settled immediately at current market prices.
+        </p>
+      </div>
+      <div class="confirm-modal-actions">
+        <button mat-button class="cancel-btn" (click)="onCancelSettle()">Cancel</button>
+        <button mat-flat-button color="warn" class="confirm-btn" [disabled]="settling()" (click)="onConfirmSettle()">
+          @if (settling()) {
+            <mat-spinner diameter="18" class="btn-spinner"></mat-spinner>
+            Settling...
+          } @else {
+            Settle Positions
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

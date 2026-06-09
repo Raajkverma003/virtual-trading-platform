@@ -49,6 +49,8 @@ export class PositionsComponent implements OnInit, OnDestroy {
   settling = signal<boolean>(false);
   cashBalance = signal<number>(0);
 
+  showConfirmSettle = signal<boolean>(false);
+
   private priceSub!: Subscription;
 
   // Computed signals for total metrics
@@ -98,21 +100,27 @@ export class PositionsComponent implements OnInit, OnDestroy {
   }
 
   onSettle(): void {
-    if (!confirm('Are you sure you want to trigger daily settlement? STOCK long positions will merge into Holdings, and other positions will be cash-settled immediately.')) {
-      return;
-    }
+    this.showConfirmSettle.set(true);
+  }
 
+  onCancelSettle(): void {
+    this.showConfirmSettle.set(false);
+  }
+
+  onConfirmSettle(): void {
     this.settling.set(true);
     this.portfolioService.settlePositions().subscribe({
       next: (res: any) => {
         this.snackBar.open(res.message || 'Settlement processed successfully!', 'Dismiss', { duration: 4000 });
         this.positions.set([]);
         this.settling.set(false);
+        this.showConfirmSettle.set(false);
         this.fetchPositions();
       },
       error: (err) => {
         this.snackBar.open(err.error?.message || 'Error processing settlement.', 'Dismiss', { duration: 3000 });
         this.settling.set(false);
+        this.showConfirmSettle.set(false);
       }
     });
   }
